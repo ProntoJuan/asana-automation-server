@@ -5,7 +5,9 @@ function getDiffBetweenTwoDates (startDate, endDate) {
     const date1 = DateTime.fromISO(endDate);
     const date2 = DateTime.fromISO(startDate);
 
-    return date1.diff(date2, ['hours', 'minutes', 'seconds']).toFormat('hh:mm:ss');
+    const diff = (date1.diff(date2).toFormat('s') / 3600).toFixed(2)
+
+    return diff
 }
 
 function calculateFirstResponseTime (taskStories, teamData, taskCreatedAt) {
@@ -41,7 +43,6 @@ function calculateFirstResponseTime (taskStories, teamData, taskCreatedAt) {
         break;
     }
 
-    console.log(res.message);
     return res
 }
 
