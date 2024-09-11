@@ -27,8 +27,10 @@ const getTask = async (taskId) => {
 }
 
 const updateTask = async (taskId, firstTimeResponse) => {
+    const customField = process.env.FRT_CUSTOM_FIELD_ID
+
     try {
-        let body = {"data": {"custom_fields": {"1207992413705337": firstTimeResponse}}};
+        let body = {"data": {"custom_fields": {[customField]: firstTimeResponse}}};
         let opts = {};
         const result = await asanaTaskInstance.updateTask(body, taskId, opts);
     

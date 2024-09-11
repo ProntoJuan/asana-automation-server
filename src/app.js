@@ -7,7 +7,6 @@ import routes from './routes.js'
 const app = express();
 const port = process.env.PORT || 8080;
 
-process.loadEnvFile() //Available on Node -v 22.6.0
 configExpress(app)
 routes(app)
 asanaConfig()
