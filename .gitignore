@@ -5,6 +5,8 @@
 # custom
 ignore.md
 TODO.md
+.cspell
+.vscode
 
 # Logs
 logs
