@@ -22,5 +22,8 @@
   },
   "eslintConfig": {
     "extends": "standard"
+  },
+  "engines": {
+    "node": "20.11.0"
   }
 }
