@@ -1,8 +1,6 @@
+import { dbJson } from '../../config/jsonDB.js'
 import { verifySignature } from '../../util/crypto.js'
 import { handleFirstResponseTime, verifyStoryFRT, handleTotalInteractionCount, verifyTaskTIC } from './webhook.service.js'
-
-const secretFRT = process.env.X_HOOK_SECRET_FRT
-const secretTIC = process.env.X_HOOK_SECRET_TIC
 
 export async function webhookFTRHandler (req, res) {
   try {
@@ -12,6 +10,8 @@ export async function webhookFTRHandler (req, res) {
     // Handle webhook secret handshake when creating a webhook
     if (req.headers['x-hook-secret']) {
       const secret = req.headers['x-hook-secret']
+
+      await dbJson.push('/secretFRT', secret)
 
       console.log('This is a new webhook')
 
@@ -23,6 +23,9 @@ export async function webhookFTRHandler (req, res) {
     console.log('New event received:', JSON.stringify(body, null, 2))
 
     // Verify the signature of the webhook when an event is sent
+
+    const secretFRT = await dbJson.getData('/secretFRT')
+
     if (!verifySignature(xHookSignature, body, secretFRT)) {
       console.log('Authorization error. Sent 401')
       res.sendStatus(401)
@@ -57,6 +60,8 @@ export async function webhookTICHandler (req, res) {
     if (req.headers['x-hook-secret']) {
       const secret = req.headers['x-hook-secret']
 
+      await dbJson.push('/secretTIC', secret)
+
       console.log('This is a new webhook')
 
       res.setHeader('X-Hook-Secret', secret)
@@ -67,6 +72,9 @@ export async function webhookTICHandler (req, res) {
     console.log('New event received:', JSON.stringify(body, null, 2))
 
     // Verify the signature of the webhook when an event is sent
+
+    const secretTIC = await dbJson.getData('/secretTIC')
+
     if (!verifySignature(xHookSignature, body, secretTIC)) {
       console.log('Authorization error. Sent 401')
       res.sendStatus(401)
