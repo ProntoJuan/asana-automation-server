@@ -40,7 +40,7 @@ export async function webhookFTRHandler (req, res) {
     // Verify info.
     if (!storyParentId) return console.log('No data on Events')
 
-    const { createdAt } = await verifyStoryFRT(storyParentId, events)
+    const { createdAt = null } = await verifyStoryFRT(storyParentId, events)
 
     if (!createdAt) return
 
@@ -89,7 +89,7 @@ export async function webhookTICHandler (req, res) {
     // Verify info
     if (!taskId) return console.log('No data on Events')
 
-    const { stories, totalInteractionCountId } = await verifyTaskTIC(taskId)
+    const { stories = null, totalInteractionCountId } = await verifyTaskTIC(taskId)
 
     if (!stories) return
 
