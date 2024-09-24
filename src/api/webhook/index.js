@@ -1,8 +1,12 @@
 import { Router } from 'express'
-import { webhookHandler } from './webhook.controller.js'
+import { webhookFTRHandler, webhookTICHandler } from './webhook.controller.js'
 
 const router = Router()
 
-router.post('/receive', webhookHandler)
+// /webhook/first-time-response -> Receive story events
+router.post('/first-time-response', webhookFTRHandler)
+
+// /webhook/total-interaction-count ->
+router.post('/total-interaction-count', webhookTICHandler)
 
 export default router

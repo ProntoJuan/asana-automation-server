@@ -20,15 +20,13 @@ function calculateFirstResponseTime (taskStories, teamData, taskCreatedAt) {
   })
 
   if (firstResponseStory) {
-    const { created_by: createdBy, gid, created_at: storyCreatedAt } = firstResponseStory
-
-    console.log(`First Response Time set. User: ${createdBy.name} Story GID: ${gid}`)
+    const { created_at: storyCreatedAt } = firstResponseStory
 
     return getTimeDifferenceInHours(taskCreatedAt, storyCreatedAt)
   }
 
   // If no valid response is found, return an empty string
-  console.log('No valid response found')
+  console.log('It was not possible to calculate FRT')
   return ''
 }
 

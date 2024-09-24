@@ -1,16 +1,17 @@
 import { verifySignature } from '../../util/crypto.js'
-import { handleFirstResponseTime, isLegitStory } from './webhook.service.js'
+import { handleFirstResponseTime, verifyStoryFRT, handleTotalInteractionCount, verifyTaskTIC } from './webhook.service.js'
 
-let secret = process.env.WEBHOOK_SECRET
+const secretFRT = process.env.X_HOOK_SECRET_FRT
+const secretTIC = process.env.X_HOOK_SECRET_TIC
 
-export async function webhookHandler (req, res) {
+export async function webhookFTRHandler (req, res) {
   try {
     const { body } = req
     const xHookSignature = req.headers['x-hook-signature']
 
     // Handle webhook secret handshake when creating a webhook
     if (req.headers['x-hook-secret']) {
-      secret = req.headers['x-hook-secret']
+      const secret = req.headers['x-hook-secret']
 
       console.log('This is a new webhook')
 
@@ -19,34 +20,72 @@ export async function webhookHandler (req, res) {
       return
     }
 
-    console.log('New event received:', body)
+    console.log('New event received:', JSON.stringify(body, null, 2))
 
     // Verify the signature of the webhook when an event is sent
-    if (!verifySignature(xHookSignature, body, secret)) {
-      console.log('Authorization errror. Sent 401')
+    if (!verifySignature(xHookSignature, body, secretFRT)) {
+      console.log('Authorization error. Sent 401')
       res.sendStatus(401)
       return
     }
+    res.sendStatus(200)
 
-    // Verify if the event has info.
-    const data = req.body.events
-    if (!data[0]) {
-      console.log('No data')
-      return res.sendStatus(200)
-    }
+    const { events } = body
 
-    const { gid: storyParentId = null } = data[0]?.parent || {}
+    const storyParentId = events[0]?.parent?.gid || null
 
-    // Verify if is a legit story.
-    const isLegit = await isLegitStory(storyParentId, data)
-    const { createdAt } = isLegit
+    // Verify info.
+    if (!storyParentId) return console.log('No data on Events')
 
-    if (!isLegit) {
-      return res.sendStatus(200)
-    }
+    const { createdAt } = await verifyStoryFRT(storyParentId, events)
+
+    if (!createdAt) return
 
     await handleFirstResponseTime(storyParentId, createdAt)
+  } catch (error) {
+    console.error('Error in webhookHandler:', error)
+    res.sendStatus(500)
+  }
+}
+
+export async function webhookTICHandler (req, res) {
+  try {
+    const { body } = req
+    const xHookSignature = req.headers['x-hook-signature']
+
+    // Handle webhook secret handshake when creating a webhook
+    if (req.headers['x-hook-secret']) {
+      const secret = req.headers['x-hook-secret']
+
+      console.log('This is a new webhook')
+
+      res.setHeader('X-Hook-Secret', secret)
+      res.sendStatus(200)
+      return
+    }
+
+    console.log('New event received:', JSON.stringify(body, null, 2))
+
+    // Verify the signature of the webhook when an event is sent
+    if (!verifySignature(xHookSignature, body, secretTIC)) {
+      console.log('Authorization error. Sent 401')
+      res.sendStatus(401)
+      return
+    }
     res.sendStatus(200)
+
+    const { events } = body
+
+    const taskId = events[0]?.resource?.gid || null
+
+    // Verify info
+    if (!taskId) return console.log('No data on Events')
+
+    const { stories, totalInteractionCountId } = await verifyTaskTIC(taskId)
+
+    if (!stories) return
+
+    handleTotalInteractionCount(taskId, stories, totalInteractionCountId)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
     res.sendStatus(500)
