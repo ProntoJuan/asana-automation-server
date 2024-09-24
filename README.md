@@ -16,7 +16,7 @@ ngrok is a cross-platform application that enables developers to expose a local 
 
 1. Clone the repository
 2. Assure you have installed Node -v `20.11.0`
-3. Assure you have installed `ngrok`
+3. Assure you have installed `ngrok` ( just for local development )
 
 ## 🛠️ Local development
 
@@ -53,9 +53,10 @@ ngrok http http://localhost:8080
 
 ### Webhook
 
-| Route            | HTTP method | Description                        |
-| ---------------- | ----------- | ---------------------------------- |
-| /webhook/receive | POST        | Webhook handshake / Receive events |
+| Route                            | HTTP method | Description                          |
+| -------------------------------- | ----------- | ------------------------------------ |
+| /webhook/first-time-response     | POST        | FTR webhook handshake/receive events |
+| /webhook/total-interaction-count | POST        | TIC webhook handshake/receive events |
 
 ## 🚀 Asana developers overview
 
@@ -66,7 +67,7 @@ An Asana app makes it possible to extend or enhance what’s possible with Asana
 -   [**API reference**](https://developers.asana.com/reference/rest-api-reference)
 -   [**Webhooks Guide**](https://developers.asana.com/docs/webhooks-guide)
 
-## 🤖 Asana Automation: First Response Time (FRT)
+## 🤖 Automation: First Response Time (FRT)
 
 This automation calculates the First Response Time (FRT) based on the first comment made by an agent after a task is created.
 
@@ -75,6 +76,14 @@ This automation calculates the First Response Time (FRT) based on the first comm
 ### Workflow
 
 <img src='./assets/frt-workflow.png'>
+
+## 🤖 Automation: Total Interaction Count (TIC)
+
+This automation calculates the Total Interaction Count (TIC) based on the total numbers of comments between the client and the agent after a task is completed.
+
+### Workflow
+
+<img src='./assets/tic-workflow.png'>
 
 ## Authors
 
