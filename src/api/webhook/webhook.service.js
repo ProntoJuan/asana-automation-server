@@ -80,7 +80,7 @@ export async function verifyTaskTIC (taskId) {
 
     if (parent) {
       console.log("It's a subtask")
-      return
+      return false
     }
 
     const totalInteractionCountId = process.env.TIC_CUSTOM_FIELD_ID
@@ -89,18 +89,18 @@ export async function verifyTaskTIC (taskId) {
 
     if (!isTIC) {
       console.log('No TIC custom field set. No further actions')
-      return
+      return false
     }
 
     if (!completed) {
       console.log('Task not completed')
       await updateTask(taskId, totalInteractionCountId, null)
-      return
+      return false
     }
 
-    const { data } = await getStoriesFromTask(taskId)
+    const { data: stories } = await getStoriesFromTask(taskId)
 
-    return { stories: data, totalInteractionCountId }
+    return { stories, totalInteractionCountId }
   } catch (error) {
     console.error('Error verifying the task:', error)
     return false
