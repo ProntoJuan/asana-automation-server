@@ -7,5 +7,5 @@ const port = process.env.PORT || 8080
 configExpress(app)
 
 app.listen(port, () => {
-  console.log('Server started on port 8080')
+  console.log(`Server started on port ${port}`)
 })
