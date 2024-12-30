@@ -29,7 +29,7 @@ export const passportConfig = (app) => {
   )
 
   app.use(session({
-    secret: 'd00dc3df-5325-430a-9794-c2754c571d1a',
+    secret: process.env.SECRET_SESSION,
     saveUninitialized: true,
     resave: true
   }))

@@ -4,9 +4,30 @@ import routes from '../routes.js'
 import { asanaConfig } from './asana.js'
 import { configJsonDB } from './jsonDB.js'
 import { passportConfig } from './passport.js'
+import cors from 'cors'
 
 function configExpress (app) {
   app.use(morgan('dev'))
+  app.use(cors({
+    origin: (origin, callback) => {
+      const ACCEPTED_ORIGINS = [
+        'http://localhost:3000',
+        'http://localhost:8080',
+        'http://localhost:5173'
+      ]
+
+      if (ACCEPTED_ORIGINS.includes(origin)) {
+        return callback(null, true)
+      }
+
+      if (!origin) {
+        return callback(null, true)
+      }
+
+      return callback(new Error('Not allowed by CORS'))
+    },
+    credentials: true
+  }))
   app.use(express.json())
   configJsonDB()
 
