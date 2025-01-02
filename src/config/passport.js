@@ -1,7 +1,10 @@
 import passport from 'passport'
 import { Strategy as AsanaStrategy } from 'passport-asana'
 import session from 'express-session'
-import { asanaToken as token } from './asana.js'
+import asana from 'asana'
+
+const authClient = asana.ApiClient.instance
+const token = authClient.authentications.token
 
 // Settings
 export const passportConfig = (app) => {

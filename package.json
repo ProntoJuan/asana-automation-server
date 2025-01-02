@@ -6,22 +6,23 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env src/app",
-    "dev": "node --env-file=.env --watch src/app.js"
+    "dev": "nodemon --env-file=.env src/app.js"
   },
   "author": "Juan Gomez",
   "license": "MIT",
   "dependencies": {
     "asana": "3.0.10",
     "cors": "2.8.5",
-    "express": "4.21.1",
+    "db-local": "^3.1.0",
+    "express": "^4.21.2",
     "express-session": "1.18.1",
     "luxon": "3.5.0",
     "morgan": "1.10.0",
-    "node-json-db": "2.3.0",
     "passport": "0.7.0",
     "passport-asana": "0.0.1"
   },
   "devDependencies": {
+    "nodemon": "^3.1.9",
     "standard": "17.1.2"
   },
   "eslintConfig": {
