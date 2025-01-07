@@ -3,6 +3,17 @@ import { verifySignature } from '../../util/crypto.js'
 import { handleFirstResponseTime, verifyStoryFRT, handleTotalInteractionCount, verifyTaskTIC } from './webhook.service.js'
 import { createFRTWebhook, createTICWebhook } from '../../config/asana.js'
 
+export function getWebhooksHandler (req, res) {
+  try {
+    const webhooks = WebhookRepository.findAll()
+
+    res.status(200).json({ webhooks })
+  } catch (error) {
+    console.error('Error getting webhooks:', error)
+    res.sendStatus(500)
+  }
+}
+
 export async function createWebhookHandler (req, res) {
   try {
     const { path, gid } = req.body

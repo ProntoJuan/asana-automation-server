@@ -25,6 +25,17 @@ export class WebhookRepository {
     return id
   }
 
+  static findAll () {
+    return Webhook.find().map((entry) => {
+      return {
+        _id: entry._id,
+        gid: entry.gid,
+        path: entry.path,
+        createdAt: entry.createdAt
+      }
+    })
+  }
+
   static findById (id) {
     return Webhook.findOne({ _id: id })
   }
