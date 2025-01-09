@@ -34,7 +34,8 @@ export const passportConfig = (app) => {
   app.use(session({
     secret: process.env.SECRET_SESSION,
     saveUninitialized: true,
-    resave: true
+    resave: true,
+    sameSite: 'none'
   }))
 
   // Initialize Passport! Also use passport.session() middleware, to support persistent login sessions (recommended).
