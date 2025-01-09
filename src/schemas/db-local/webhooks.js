@@ -5,7 +5,9 @@ const { Schema } = new DBLocal({ path: './db' })
 
 export const Webhook = Schema('Webhook', {
   _id: { type: String, required: true },
-  gid: { type: String, required: true },
+  webhookId: { type: String, required: false },
+  resourceId: { type: String, required: true },
+  resourceType: { type: String, required: false },
   secret: { type: String, required: false },
   path: { type: String, required: true },
   createdAt: { type: String, required: true }
@@ -16,7 +18,7 @@ export class WebhookRepository {
     const id = randomUUID()
     const createdAt = new Date().toISOString()
 
-    const entry = Webhook.findOne({ gid: data.gid, path: data.path })
+    const entry = Webhook.findOne({ resourceId: data.gid, path: data.path })
 
     if (entry) throw new Error('Webhook already exists')
 
@@ -29,7 +31,8 @@ export class WebhookRepository {
     return Webhook.find().map((entry) => {
       return {
         _id: entry._id,
-        gid: entry.gid,
+        webhookId: entry.webhookId,
+        resourceId: entry.resourceId,
         path: entry.path,
         createdAt: entry.createdAt
       }
@@ -41,21 +44,15 @@ export class WebhookRepository {
   }
 
   static findByGid (gid) {
-    return Webhook.findOne({ gid })
+    return Webhook.findOne({ resourceId: gid })
   }
 
   static findByGidAndPath (gid, path) {
-    return Webhook.findOne({ gid, path })
+    return Webhook.findOne({ resourceId: gid, path })
   }
 
   static findByPath (path) {
     return Webhook.find({ path })
-  }
-
-  static findLatest () {
-    return Webhook.find().reduce((lat, cur) => {
-      return new Date(cur.createdAt) > new Date(lat.createdAt) ? cur : lat
-    })
   }
 
   static update (id, data) {
@@ -64,7 +61,6 @@ export class WebhookRepository {
   }
 
   static delete (id) {
-    Webhook.remove({ _id: id })
-    return id
+    return Webhook.remove({ webhookId: id })
   }
 }

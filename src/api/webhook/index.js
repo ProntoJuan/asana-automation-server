@@ -1,9 +1,11 @@
 import { Router } from 'express'
 import {
+  getWebhooksHandler,
+  createWebhookHandler,
   webhookFTRHandler,
   webhookTICHandler,
-  createWebhookHandler,
-  getWebhooksHandler
+  webhookURHandler,
+  deleteWebhookHandler
 } from './webhook.controller.js'
 import { checkAuthenticated } from '../../middlewares/auth.js'
 
@@ -13,8 +15,12 @@ router.get('/', checkAuthenticated, getWebhooksHandler)
 
 router.post('/', checkAuthenticated, createWebhookHandler)
 
-router.post('/first-response-time/:gid', checkAuthenticated, webhookFTRHandler)
+router.post('/first-response-time/:gid', webhookFTRHandler)
 
-router.post('/total-interaction-count/:gid', checkAuthenticated, webhookTICHandler)
+router.post('/total-interaction-count/:gid', webhookTICHandler)
+
+router.post('/urgent-request/:gid', webhookURHandler)
+
+router.delete('/:id', checkAuthenticated, deleteWebhookHandler)
 
 export default router

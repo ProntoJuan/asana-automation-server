@@ -2,6 +2,10 @@ import Asana from 'asana'
 
 let asanaTaskInstance, asanaStoriesInstance, asanaUsersInstance, asanaProjectsInstance, asanaWebhooksInstance
 
+const target = process.env.ENV === 'local' ? process.env.WEBHOOK_TARGET : process.env.HOST
+
+const workspace = process.env.ASANA_WORKSPACE
+
 const asanaConfig = () => {
   const client = Asana.ApiClient.instance
   const token = client.authentications.token
@@ -17,11 +21,18 @@ const asanaConfig = () => {
 
 // WEBHOOKS
 
+const getWebhooks = async () => {
+  const opts = {}
+  const result = await asanaWebhooksInstance.getWebhooks(workspace, opts)
+
+  return result
+}
+
 const createFRTWebhook = async (resource) => {
   const body = {
     data: {
       resource,
-      target: `https://9ee9-2800-e2-1d80-1e9-db02-b39-bbdf-1b07.ngrok-free.app/api/webhook/first-response-time/${resource}`,
+      target: `${target}/api/webhook/first-response-time/${resource}`,
       filters: [
         {
           resource_type: 'story',
@@ -32,8 +43,8 @@ const createFRTWebhook = async (resource) => {
     }
   }
   const opts = {}
-  const result = await asanaWebhooksInstance.createWebhook(body, opts)
 
+  const result = await asanaWebhooksInstance.createWebhook(body, opts)
   return result
 }
 
@@ -41,7 +52,7 @@ const createTICWebhook = async (resource) => {
   const body = {
     data: {
       resource,
-      target: `https://9ee9-2800-e2-1d80-1e9-db02-b39-bbdf-1b07.ngrok-free.app/api/webhook/total-interaction-count/${resource}`,
+      target: `${target}/api/webhook/total-interaction-count/${resource}`,
       filters: [
         {
           resource_type: 'task',
@@ -58,6 +69,27 @@ const createTICWebhook = async (resource) => {
   return result
 }
 
+const createURWebhook = async (resource) => {
+  const body = {
+    data: {
+      resource,
+      target: `${target}/api/webhook/urgent-request/${resource}`,
+      filters: [
+        {
+          resource_type: 'task',
+          action: 'added'
+        }
+      ]
+    }
+  }
+  return asanaWebhooksInstance.createWebhook(body)
+}
+
+const deleteWebhook = async (webhookId) => {
+  const result = await asanaWebhooksInstance.deleteWebhook(webhookId)
+
+  return result
+}
 // TASKS
 
 const getTask = async (taskId) => {
@@ -117,8 +149,11 @@ const getProjectById = async (projectId) => {
 
 export {
   asanaConfig,
+  getWebhooks,
   createFRTWebhook,
   createTICWebhook,
+  createURWebhook,
+  deleteWebhook,
   getTask,
   getStoriesFromTask,
   getUsersInATeam,
