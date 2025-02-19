@@ -59,7 +59,7 @@ export async function verifyStoryFRT (storyParentId) {
 export async function handleTotalInteractionCount (taskId, stories, totalInteractionCountId) {
   try {
     const totalComments = stories.reduce((acc, cur) => {
-      if (cur.type === 'comment') return acc + 1
+      if (cur.type === 'comment' && cur.created_by !== null) return acc + 1
 
       return acc
     }, 0)
