@@ -3,7 +3,7 @@ import DBLocal from 'db-local'
 
 const { Schema } = new DBLocal({ path: './db' })
 
-export const Webhook = Schema('Webhook', {
+const Webhook = Schema('Webhook', {
   _id: { type: String, required: true },
   webhookId: { type: String, required: false },
   resourceId: { type: String, required: true },
@@ -60,7 +60,7 @@ export class WebhookRepository {
     return entry.update(data).save()
   }
 
-  static delete (id) {
-    return Webhook.remove({ webhookId: id })
+  static delete (obj) {
+    return Webhook.remove(obj)
   }
 }

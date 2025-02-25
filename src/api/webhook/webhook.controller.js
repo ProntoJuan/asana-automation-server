@@ -1,8 +1,10 @@
 import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
+import { KeywordsRepository } from '../../schemas/db-local/keywords.js'
 import { verifySignature } from '../../util/crypto.js'
 import { handleFirstResponseTime, verifyStoryFRT, handleTotalInteractionCount, verifyTaskTIC } from './webhook.service.js'
-import { getWebhooks, createFRTWebhook, createTICWebhook, createURWebhook, deleteWebhook } from '../../config/asana.js'
+import { getWebhooks, createFRTWebhook, createTICWebhook, createURWebhook, deleteWebhook, getTask, getStory, updateTask } from '../../config/asana.js'
 import { buildFinalResponse } from './utils.js'
+import { containsUrgentKeyword } from '../../util/urgentKeyword.js'
 
 export async function getWebhooksHandler (req, res) {
   try {
@@ -47,7 +49,7 @@ export async function createWebhookHandler (req, res) {
     const { gid: webhookId, resource: { resource_type: resourceType } } = response.data
 
     if (!webhookId || !resourceType) {
-      WebhookRepository.delete({ webhookId: webhookUUID })
+      WebhookRepository.delete({ _id: webhookUUID })
       res.status(500).json({ message: 'Invalid response' })
     }
 
@@ -55,7 +57,7 @@ export async function createWebhookHandler (req, res) {
 
     res.status(201).json({ message: 'Webhook created' })
   } catch (error) {
-    WebhookRepository.delete({ webhookId: webhookUUID })
+    WebhookRepository.delete({ _id: webhookUUID })
     console.error('Error creating webhook:', error)
     res.sendStatus(500)
   } finally {
@@ -176,7 +178,7 @@ export async function webhookURHandler (req, res) {
     const xHookSignature = req.headers['x-hook-signature']
     const webhook = WebhookRepository.findByGidAndPath(
       gid,
-      '/first-response-time'
+      '/urgent-request'
     )
 
     // Handle webhook secret handshake when creating a webhook
@@ -192,11 +194,10 @@ export async function webhookURHandler (req, res) {
       return
     }
 
-    console.log('New event received:', JSON.stringify(body, null, 2))
+    console.log('New event(s) received:', JSON.stringify(body, null, 2))
 
-    // const { events } = body
+    const { events } = body
 
-    // const storyParentId = events[0]?.parent?.gid || null
     const secretUR = WebhookRepository.findById(webhook._id).secret
 
     // Verify the signature of the webhook when an event is sent
@@ -208,15 +209,79 @@ export async function webhookURHandler (req, res) {
     }
     res.sendStatus(200)
 
-    // if (!storyParentId) return
+    if (events.length === 0) return
 
-    // Verify info.
+    // If urgent return
 
-    // TOOD: Verify info function
+    let textToAnalyze = ''
+    let taskId = null
 
-    // if verify info fails, return
+    for (const event of events) {
+      if (event.action === 'changed') {
+        // When a task change on title or description
+        if (
+          event.resource.resource_type === 'task' &&
+          (
+            event.change.field === 'name' ||
+            event.change.field === 'notes' ||
+            event.change.field === 'html_notes'
+          )
+        ) {
+          taskId = event.resource.gid
+          const { name, notes } = (await getTask(event.resource.gid)).data
+          textToAnalyze += name + notes
+        }
+        // When a story change
+        if (
+          event.resource.resource_type === 'story' &&
+          event.change.field === 'text'
+        ) {
+          const {
+            text,
+            target: { gid: taskGid }
+          } = (await getStory(event.resource.gid)).data
+          taskId = taskGid
+          textToAnalyze += text
+        }
+      }
 
-    // TODO: handle urgent request function
+      if (event.action === 'added') {
+        // When a new task is added
+        if (
+          event.resource.resource_type === 'task' &&
+          event.parent.resource_type === 'project'
+        ) {
+          taskId = event.resource.gid
+          const { name, notes } = (await getTask(event.resource.gid)).data
+          textToAnalyze += name + notes
+        }
+        // When a new comment is added
+        if (
+          event.resource.resource_subtype === 'comment_added' &&
+          event.user !== null
+        ) {
+          taskId = event.parent.gid
+          const { text } = (await getStory(event.resource.gid)).data
+          textToAnalyze += text
+        }
+      }
+    }
+
+    if (!textToAnalyze) return
+
+    const urgentKeywords = KeywordsRepository.findAll().map(i => i.keyword)
+
+    const isUrgentWordDetected = containsUrgentKeyword(urgentKeywords, textToAnalyze)
+
+    if (!isUrgentWordDetected) return
+
+    await updateTask(
+      taskId,
+      process.env.PRIORITY_CUSTOM_FIELD_GID,
+      process.env.URGENT_ENUM_PRIORITY_GID
+    )
+
+    console.log(`New keyword detected on task ${taskId}`)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
     res.sendStatus(500)
@@ -229,7 +294,7 @@ export async function deleteWebhookHandler (req, res) {
 
     await deleteWebhook(id)
 
-    WebhookRepository.delete(id)
+    WebhookRepository.delete({ webhookId: id })
 
     res.status(200).json({ message: 'Webhook deleted' })
   } catch (error) {
