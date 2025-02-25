@@ -73,13 +73,7 @@ const createURWebhook = async (resource) => {
   const body = {
     data: {
       resource,
-      target: `${target}/api/webhook/urgent-request/${resource}`,
-      filters: [
-        {
-          resource_type: 'task',
-          action: 'added'
-        }
-      ]
+      target: `${target}/api/webhook/urgent-request/${resource}`
     }
   }
   return asanaWebhooksInstance.createWebhook(body)
@@ -112,6 +106,13 @@ const updateTask = async (taskId, customFieldId, value) => {
 const getStoriesFromTask = async (taskId) => {
   const opts = {}
   const results = await asanaStoriesInstance.getStoriesForTask(taskId, opts)
+
+  return results
+}
+
+const getStory = async (storyId) => {
+  const opts = {}
+  const results = await asanaStoriesInstance.getStory(storyId, opts)
 
   return results
 }
@@ -156,6 +157,7 @@ export {
   deleteWebhook,
   getTask,
   getStoriesFromTask,
+  getStory,
   getUsersInATeam,
   updateTask,
   getMe,

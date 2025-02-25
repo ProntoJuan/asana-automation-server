@@ -2,7 +2,7 @@
   "name": "asana-webhook",
   "version": "1.0.0",
   "description": "Asana webhook to be notified when the first comment is added to a task.",
-  "main": "index.js",
+  "main": "src/app.js",
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env src/app",
@@ -13,8 +13,8 @@
   "dependencies": {
     "asana": "3.0.10",
     "cors": "2.8.5",
-    "db-local": "^3.1.0",
-    "express": "^4.21.2",
+    "db-local": "3.1.0",
+    "express": "4.21.2",
     "express-session": "1.18.1",
     "luxon": "3.5.0",
     "morgan": "1.10.0",
@@ -22,7 +22,7 @@
     "passport-asana": "0.0.1"
   },
   "devDependencies": {
-    "nodemon": "^3.1.9",
+    "nodemon": "3.1.9",
     "standard": "17.1.2"
   },
   "eslintConfig": {
