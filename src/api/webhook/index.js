@@ -11,7 +11,7 @@ import { checkAuthenticated } from '../../middlewares/auth.js'
 
 const router = Router()
 
-router.get('/', checkAuthenticated, getWebhooksHandler)
+router.get('/', getWebhooksHandler)
 
 router.post('/', checkAuthenticated, createWebhookHandler)
 
