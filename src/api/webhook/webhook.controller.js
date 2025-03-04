@@ -170,6 +170,17 @@ export async function webhookTICHandler (req, res) {
   }
 }
 
+export function keywordsHandler (req, res) {
+  try {
+    const keywords = KeywordsRepository.findAll().map(i => i.keyword)
+
+    res.status(200).json({ keywords })
+  } catch (error) {
+    console.error('Error getting the keywords: ', error.message)
+    res.sendStatus(500)
+  }
+}
+
 export async function webhookURHandler (req, res) {
   try {
     const { body } = req

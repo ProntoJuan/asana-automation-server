@@ -4,6 +4,7 @@ import {
   createWebhookHandler,
   webhookFTRHandler,
   webhookTICHandler,
+  keywordsHandler,
   webhookURHandler,
   deleteWebhookHandler
 } from './webhook.controller.js'
@@ -18,6 +19,8 @@ router.post('/', checkAuthenticated, createWebhookHandler)
 router.post('/first-response-time/:gid', webhookFTRHandler)
 
 router.post('/total-interaction-count/:gid', webhookTICHandler)
+
+router.get('/urgent-request', keywordsHandler)
 
 router.post('/urgent-request/:gid', webhookURHandler)
 

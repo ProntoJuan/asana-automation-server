@@ -10,6 +10,11 @@ const Keywords = Schema('Keywords', {
 
 export class KeywordsRepository {
   static create (data) {
+    const lowerCaseKeyword = data.toLowerCase()
+    const entry = Keywords.findOne({ keyword: lowerCaseKeyword })
+
+    if (entry) throw new Error('Keyword already exists')
+
     const id = randomUUID()
     return Keywords.create({ _id: id, keyword: data.toLowerCase() }).save()
   }
