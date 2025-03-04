@@ -110,7 +110,6 @@ export async function webhookFTRHandler (req, res) {
     await handleFirstResponseTime(storyParentId, createdAt)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
-    res.sendStatus(500)
   }
 }
 
@@ -168,7 +167,6 @@ export async function webhookTICHandler (req, res) {
     handleTotalInteractionCount(taskId, stories, totalInteractionCountId)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
-    res.sendStatus(500)
   }
 }
 
@@ -289,7 +287,6 @@ export async function webhookURHandler (req, res) {
     console.log(`New keyword detected on task ${taskId}`)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
-    res.sendStatus(500)
   }
 }
 
