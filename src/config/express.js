@@ -4,6 +4,7 @@ import routes from '../routes.js'
 import { asanaConfig } from './asana.js'
 import { passportConfig } from './passport.js'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 
 function configExpress (app) {
   app.use(morgan('dev'))
@@ -27,12 +28,12 @@ function configExpress (app) {
     },
     credentials: true
   }))
+
   app.use(express.json())
+  app.use(cookieParser())
 
   passportConfig(app)
-
   asanaConfig()
-
   routes(app)
 }
 

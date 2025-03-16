@@ -5,4 +5,18 @@ function checkAuthenticated (req, res, next) {
   res.redirect('/login')
 }
 
-export { checkAuthenticated }
+const authenticateAPI = (req, res, next) => {
+  const apiKey = req.headers['x-api-key']
+
+  if (!apiKey) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+
+  if (apiKey !== process.env.API_KEY) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+
+  next()
+}
+
+export { checkAuthenticated, authenticateAPI }
