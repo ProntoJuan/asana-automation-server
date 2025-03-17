@@ -12,8 +12,6 @@ export async function getWebhooksHandler (req, res) {
 
     const { data: asanaData } = await getWebhooks()
 
-    console.log(asanaData)
-
     const webhooks = buildFinalResponse(asanaData, dbData)
 
     res.status(200).json({ webhooks })
@@ -27,16 +25,20 @@ export async function createWebhookHandler (req, res) {
   const { path, gid: resourceId } = req.body
 
   let response
+  let webhookUUID
 
   try {
     switch (path) {
       case '/first-response-time':
+        webhookUUID = WebhookRepository.create({ path, resourceId })
         response = await createFRTWebhook(resourceId)
         break
       case '/total-interaction-count':
+        webhookUUID = WebhookRepository.create({ path, resourceId })
         response = await createTICWebhook(resourceId)
         break
       case '/urgent-request':
+        webhookUUID = WebhookRepository.create({ path, resourceId })
         response = await createURWebhook(resourceId)
         break
       default:
@@ -44,14 +46,23 @@ export async function createWebhookHandler (req, res) {
         return
     }
 
-    console.log('New Webhook created: ', response)
+    const { gid: webhookId, resource: { resource_type: resourceType } } = response.data
+
+    if (!webhookId || !resourceType) {
+      WebhookRepository.delete({ _id: webhookUUID })
+      res.status(500).json({ message: 'Invalid response' })
+    }
+
+    WebhookRepository.update(webhookUUID, { webhookId, resourceType })
 
     res.status(201).json({ message: 'Webhook created' })
   } catch (error) {
+    WebhookRepository.delete({ _id: webhookUUID })
     console.error('Error creating webhook:', error)
     res.sendStatus(500)
   } finally {
     response = ''
+    webhookUUID = ''
   }
 }
 
@@ -69,13 +80,7 @@ export async function webhookFTRHandler (req, res) {
     if (req.headers['x-hook-secret']) {
       const secret = req.headers['x-hook-secret']
 
-      WebhookRepository.create({
-        webhookId: '',
-        resourceId: gid,
-        resourceType: 'project',
-        secret,
-        path: '/first-response-time'
-      })
+      WebhookRepository.update(webhook._id, { secret })
 
       console.log('This is a new webhook')
 
@@ -127,13 +132,7 @@ export async function webhookTICHandler (req, res) {
     if (req.headers['x-hook-secret']) {
       const secret = req.headers['x-hook-secret']
 
-      WebhookRepository.create({
-        webhookId: '',
-        resourceId: gid,
-        resourceType: 'project',
-        secret,
-        path: '/total-interaction-count'
-      })
+      WebhookRepository.update(webhook._id, { secret })
 
       console.log('This is a new webhook')
 
@@ -170,17 +169,6 @@ export async function webhookTICHandler (req, res) {
   }
 }
 
-export function keywordsHandler (req, res) {
-  try {
-    const keywords = KeywordsRepository.findAll().map(i => i.keyword)
-
-    res.status(200).json({ keywords })
-  } catch (error) {
-    console.error('Error getting the keywords: ', error.message)
-    res.sendStatus(500)
-  }
-}
-
 export async function webhookURHandler (req, res) {
   try {
     const { body } = req
@@ -195,13 +183,7 @@ export async function webhookURHandler (req, res) {
     if (req.headers['x-hook-secret']) {
       const secret = req.headers['x-hook-secret']
 
-      WebhookRepository.create({
-        webhookId: '',
-        resourceId: gid,
-        resourceType: 'project',
-        secret,
-        path: '/urgent-request'
-      })
+      WebhookRepository.update(webhook._id, { secret })
 
       console.log('This is a new webhook')
 
@@ -298,6 +280,17 @@ export async function webhookURHandler (req, res) {
     console.log(`New keyword detected on task ${taskId}`)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
+  }
+}
+
+export function keywordsHandler (req, res) {
+  try {
+    const keywords = KeywordsRepository.findAll().map(i => i.keyword)
+
+    res.status(200).json({ keywords })
+  } catch (error) {
+    console.error('Error getting the keywords: ', error.message)
+    res.sendStatus(500)
   }
 }
 

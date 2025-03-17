@@ -18,7 +18,7 @@ export class WebhookRepository {
     const id = randomUUID()
     const createdAt = new Date().toISOString()
 
-    const entry = Webhook.findOne({ resourceId: data.gid, path: data.path })
+    const entry = Webhook.findOne({ resourceId: data.resourceId, path: data.path })
 
     if (entry) throw new Error('Webhook already exists')
 

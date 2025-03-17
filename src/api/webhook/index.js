@@ -8,13 +8,13 @@ import {
   webhookURHandler,
   deleteWebhookHandler
 } from './webhook.controller.js'
-import { checkAuthenticated } from '../../middlewares/auth.js'
+import { authenticateAPI } from '../../middlewares/auth.js'
 
 const router = Router()
 
 router.get('/', getWebhooksHandler)
 
-router.post('/', checkAuthenticated, createWebhookHandler)
+router.post('/', authenticateAPI, createWebhookHandler)
 
 router.post('/first-response-time/:gid', webhookFTRHandler)
 
@@ -24,6 +24,6 @@ router.get('/urgent-request', keywordsHandler)
 
 router.post('/urgent-request/:gid', webhookURHandler)
 
-router.delete('/:id', checkAuthenticated, deleteWebhookHandler)
+router.delete('/:id', authenticateAPI, deleteWebhookHandler)
 
 export default router
