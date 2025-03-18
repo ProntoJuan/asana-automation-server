@@ -15,6 +15,8 @@ function calculateFirstResponseTime (taskStories, teamData, taskCreatedAt) {
   const firstResponseStory = stories.find(story => {
     const { type, created_by: createdBy } = story
 
+    if (createdBy === null) return false
+
     // Check if story is a comment and the user belongs to the team
     return type === 'comment' && teamIds.has(createdBy.gid)
   })
