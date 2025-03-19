@@ -3,7 +3,7 @@ import { KeywordsRepository } from '../../schemas/db-local/keywords.js'
 import { verifySignature } from '../../util/crypto.js'
 import { handleFirstResponseTime, verifyStoryFRT, handleTotalInteractionCount, verifyTaskTIC } from './webhook.service.js'
 import { getWebhooks, createFRTWebhook, createTICWebhook, createURWebhook, deleteWebhook, getTask, getStory, updateTask } from '../../config/asana.js'
-import { buildFinalResponse } from './utils.js'
+import { buildFinalResponse, checkIfCreatedByTeam, checkIfUrgentPrioritySet } from './utils.js'
 import { containsUrgentKeyword } from '../../util/urgentKeyword.js'
 
 export async function getWebhooksHandler (req, res) {
@@ -224,7 +224,12 @@ export async function webhookURHandler (req, res) {
           )
         ) {
           taskId = event.resource.gid
-          const { name, notes } = (await getTask(event.resource.gid)).data
+          const data = (await getTask(event.resource.gid)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(data)) return
+
+          const { name, notes } = data
           textToAnalyze += name + notes
         }
         // When a story change
@@ -232,12 +237,22 @@ export async function webhookURHandler (req, res) {
           event.resource.resource_type === 'story' &&
           event.change.field === 'text'
         ) {
+          const data = (await getStory(event.resource.gid)).data
+
+          // Check if the story was changed by a team member
+          if (await checkIfCreatedByTeam(data)) return
+
           const {
             text,
             target: { gid: taskGid }
-          } = (await getStory(event.resource.gid)).data
+          } = data
           taskId = taskGid
           textToAnalyze += text
+
+          const taskData = (await getTask(taskId)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(taskData)) return
         }
       }
 
@@ -248,7 +263,12 @@ export async function webhookURHandler (req, res) {
           event.parent.resource_type === 'project'
         ) {
           taskId = event.resource.gid
-          const { name, notes } = (await getTask(event.resource.gid)).data
+          const data = (await getTask(event.resource.gid)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(data)) return
+
+          const { name, notes } = data
           textToAnalyze += name + notes
         }
         // When a new comment is added
@@ -257,7 +277,18 @@ export async function webhookURHandler (req, res) {
           event.user !== null
         ) {
           taskId = event.parent.gid
-          const { text } = (await getStory(event.resource.gid)).data
+
+          const taskData = (await getTask(taskId)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(taskData)) return
+
+          const data = (await getStory(event.resource.gid)).data
+
+          // Check if the comment was created by a team member
+          if (await checkIfCreatedByTeam(data)) return
+
+          const { text } = data
           textToAnalyze += text
         }
       }
