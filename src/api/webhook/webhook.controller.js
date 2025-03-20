@@ -214,24 +214,6 @@ export async function webhookURHandler (req, res) {
 
     for (const event of events) {
       if (event.action === 'changed') {
-        // When a task change on title or description
-        if (
-          event.resource.resource_type === 'task' &&
-          (
-            event.change.field === 'name' ||
-            event.change.field === 'notes' ||
-            event.change.field === 'html_notes'
-          )
-        ) {
-          taskId = event.resource.gid
-          const data = (await getTask(event.resource.gid)).data
-
-          // Check if the task already has the urgent priority
-          if (checkIfUrgentPrioritySet(data)) return
-
-          const { name, notes } = data
-          textToAnalyze += name + notes
-        }
         // When a story change
         if (
           event.resource.resource_type === 'story' &&
@@ -269,7 +251,7 @@ export async function webhookURHandler (req, res) {
           if (checkIfUrgentPrioritySet(data)) return
 
           const { name, notes } = data
-          textToAnalyze += name + notes
+          textToAnalyze += name + ' ' + notes
         }
         // When a new comment is added
         if (
