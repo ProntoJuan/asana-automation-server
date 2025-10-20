@@ -5,8 +5,8 @@
   "main": "src/app.js",
   "type": "module",
   "scripts": {
-    "start": "node --env-file=.env src/app",
-    "dev": "node src/app.js"
+    "start": "node src/app",
+    "dev": "nodemon --env-file=.env src/app.js"
   },
   "author": "Juan Gomez",
   "license": "MIT",
@@ -32,6 +32,6 @@
     "extends": "standard"
   },
   "engines": {
-    "node": "22.20.0"
+    "node": "22.11.0"
   }
 }
