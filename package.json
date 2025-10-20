@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node --env-file=.env src/app",
-    "dev": "nodemon --env-file=.env src/app.js"
+    "dev": "node src/app.js"
   },
   "author": "Juan Gomez",
   "license": "MIT",
