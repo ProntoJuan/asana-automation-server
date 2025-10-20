@@ -30,5 +30,8 @@
   },
   "eslintConfig": {
     "extends": "standard"
+  },
+  "engines": {
+    "node": "22.20.0"
   }
 }
