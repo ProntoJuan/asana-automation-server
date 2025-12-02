@@ -2,10 +2,7 @@ import { Router } from 'express'
 import {
   getWebhooksHandler,
   createWebhookHandler,
-  webhookFTRHandler,
-  webhookTICHandler,
-  keywordsHandler,
-  webhookURHandler,
+  webhookFRTHandler,
   deleteWebhookHandler
 } from './webhook.controller.js'
 import { authenticateAPI } from '../../middlewares/auth.js'
@@ -16,13 +13,7 @@ router.get('/', getWebhooksHandler)
 
 router.post('/', authenticateAPI, createWebhookHandler)
 
-router.post('/first-response-time/:gid', webhookFTRHandler)
-
-router.post('/total-interaction-count/:gid', webhookTICHandler)
-
-router.get('/urgent-request', keywordsHandler)
-
-router.post('/urgent-request/:gid', webhookURHandler)
+router.post('/first-response-time/:gid', webhookFRTHandler)
 
 router.delete('/:id', authenticateAPI, deleteWebhookHandler)
 
