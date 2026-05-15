@@ -5,7 +5,7 @@ function getTimeDifferenceInHours (startDate, endDate) {
   const end = DateTime.fromISO(endDate)
   const start = DateTime.fromISO(startDate)
 
-  return (end.diff(start).toFormat('s') / 3600).toFixed(2)
+  return parseFloat((end.diff(start).toFormat('s') / 3600).toFixed(2))
 }
 
 function calculateFirstResponseTime (taskStories, teamData, taskCreatedAt) {
