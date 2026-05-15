@@ -148,6 +148,16 @@ const getProjectById = async (projectId) => {
   return result
 }
 
+const getProjectsInWorkspace = async () => {
+  const opts = {
+    workspace: process.env.ASANA_WORKSPACE,
+    opt_fields: 'gid,name',
+    archived: false,
+    limit: 100
+  }
+  return asanaProjectsInstance.getProjects(opts)
+}
+
 export {
   asanaConfig,
   getWebhooks,
@@ -162,5 +172,6 @@ export {
   updateTask,
   getMe,
   getUserById,
-  getProjectById
+  getProjectById,
+  getProjectsInWorkspace
 }

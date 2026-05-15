@@ -1,0 +1,62 @@
+import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace } from '../../config/asana.js'
+import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
+import { buildFinalResponse } from '../webhook/utils.js'
+
+export function getMeUI (req, res) {
+  res.json(req.user)
+}
+
+export async function getWebhooksUI (req, res) {
+  try {
+    const dbData = WebhookRepository.findAll()
+    const { data: asanaData } = await getWebhooks()
+    res.json({ webhooks: buildFinalResponse(asanaData, dbData) })
+  } catch (error) {
+    console.error('Error getting webhooks:', error)
+    res.sendStatus(500)
+  }
+}
+
+export async function getProjectsUI (req, res) {
+  try {
+    const { data: allProjects } = await getProjectsInWorkspace()
+    const registered = new Set(WebhookRepository.findAll().map(w => w.resourceId))
+    const available = allProjects
+      .filter(p => !registered.has(p.gid))
+      .sort((a, b) => a.name.localeCompare(b.name))
+    res.json({ projects: available })
+  } catch (error) {
+    console.error('Error getting projects:', error)
+    res.sendStatus(500)
+  }
+}
+
+export async function registerWebhookUI (req, res) {
+  const { gid } = req.body
+  if (!gid) return res.status(400).json({ message: 'Project GID is required' })
+
+  let webhookUUID
+  try {
+    webhookUUID = WebhookRepository.create({ path: '/first-response-time', resourceId: gid })
+    const response = await createFRTWebhook(gid)
+    const { gid: webhookId, resource: { resource_type: resourceType } } = response.data
+    WebhookRepository.update(webhookUUID, { webhookId, resourceType })
+    res.status(201).json({ message: 'Webhook registered successfully' })
+  } catch (error) {
+    if (webhookUUID) WebhookRepository.delete({ _id: webhookUUID })
+    console.error('Error registering webhook:', error)
+    res.status(500).json({ message: 'Failed to register webhook' })
+  }
+}
+
+export async function deleteWebhookUI (req, res) {
+  try {
+    const { id } = req.params
+    await deleteWebhook(id)
+    WebhookRepository.delete({ webhookId: id })
+    res.json({ message: 'Webhook deleted' })
+  } catch (error) {
+    console.error('Error deleting webhook:', error)
+    res.sendStatus(500)
+  }
+}
