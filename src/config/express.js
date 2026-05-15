@@ -6,6 +6,7 @@ import routes from '../routes.js'
 import { asanaConfig } from './asana.js'
 
 function configExpress (app) {
+  app.set('trust proxy', 1)
   app.use(morgan('dev'))
   app.use(express.json())
 
