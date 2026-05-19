@@ -1,6 +1,6 @@
 import Asana from 'asana'
 
-let asanaTaskInstance, asanaStoriesInstance, asanaUsersInstance, asanaProjectsInstance, asanaWebhooksInstance
+let asanaTaskInstance, asanaStoriesInstance, asanaUsersInstance, asanaProjectsInstance, asanaWebhooksInstance, asanaTeamsInstance
 
 const target = process.env.ENV === 'local' ? process.env.WEBHOOK_TARGET : process.env.HOST
 
@@ -17,6 +17,7 @@ const asanaConfig = () => {
   asanaStoriesInstance = new Asana.StoriesApi()
   asanaUsersInstance = new Asana.UsersApi()
   asanaProjectsInstance = new Asana.ProjectsApi()
+  asanaTeamsInstance = new Asana.TeamsApi()
 }
 
 // WEBHOOKS
@@ -158,6 +159,25 @@ const getProjectsInWorkspace = async () => {
   return asanaProjectsInstance.getProjects(opts)
 }
 
+const getUserByEmail = async (email) => {
+  const opts = { opt_fields: 'gid,email', limit: 100 }
+  const result = await asanaUsersInstance.getUsersForWorkspace(workspace, opts)
+  const users = result.data ?? []
+  return users.find(u => u.email === email) ?? null
+}
+
+const getTeamsForUser = async (userGid) => {
+  const opts = { organization: workspace, opt_fields: 'gid,name', limit: 100 }
+  const result = await asanaTeamsInstance.getTeamsForUser(userGid, opts)
+  return result.data ?? []
+}
+
+const getProjectsForTeam = async (teamGid) => {
+  const opts = { opt_fields: 'gid,name', archived: false, limit: 100 }
+  const result = await asanaProjectsInstance.getProjectsForTeam(teamGid, opts)
+  return result.data ?? []
+}
+
 export {
   asanaConfig,
   getWebhooks,
@@ -173,5 +193,8 @@ export {
   getMe,
   getUserById,
   getProjectById,
-  getProjectsInWorkspace
+  getProjectsInWorkspace,
+  getUserByEmail,
+  getTeamsForUser,
+  getProjectsForTeam
 }

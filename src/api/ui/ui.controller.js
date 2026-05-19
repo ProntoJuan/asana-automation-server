@@ -1,4 +1,4 @@
-import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace } from '../../config/asana.js'
+import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getProjectsForTeam } from '../../config/asana.js'
 import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
 import { buildFinalResponse } from '../webhook/utils.js'
 
@@ -19,11 +19,30 @@ export async function getWebhooksUI (req, res) {
 
 export async function getProjectsUI (req, res) {
   try {
-    const { data: allProjects } = await getProjectsInWorkspace()
     const registered = new Set(WebhookRepository.findAll().map(w => w.resourceId))
-    const available = allProjects
-      .filter(p => !registered.has(p.gid))
+
+    const asanaUser = await getUserByEmail(req.user.email)
+    if (!asanaUser) {
+      console.warn(`No Asana user found for email: ${req.user.email}`)
+      const { data: allProjects } = await getProjectsInWorkspace()
+      const available = allProjects
+        .filter(p => !registered.has(p.gid))
+        .sort((a, b) => a.name.localeCompare(b.name))
+      return res.json({ projects: available })
+    }
+
+    const teams = await getTeamsForUser(asanaUser.gid)
+    const projectArrays = await Promise.all(teams.map(t => getProjectsForTeam(t.gid)))
+    const seen = new Set()
+    const available = projectArrays
+      .flat()
+      .filter(p => {
+        if (registered.has(p.gid) || seen.has(p.gid)) return false
+        seen.add(p.gid)
+        return true
+      })
       .sort((a, b) => a.name.localeCompare(b.name))
+
     res.json({ projects: available })
   } catch (error) {
     console.error('Error getting projects:', error)
