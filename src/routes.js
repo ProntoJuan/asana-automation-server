@@ -13,6 +13,12 @@ function routes (app) {
   app.use('/api/healthcheck', healthcheckRouter)
   app.use('/api/webhook', webhookRouter)
   app.use('/ui', checkAuthenticated, uiRouter)
+
+  app.get('/login', (req, res) => {
+    if (req.isAuthenticated()) return res.redirect('/')
+    res.sendFile(path.join(__dirname, '../public/login.html'))
+  })
+
   app.get('/', checkAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, '../public/index.html'))
   })

@@ -4,18 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Register Project — FRT Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
     }
 
     header {
-      background: #1a3a5c;
+      background: #162447;
       color: white;
       padding: 0 32px;
       height: 60px;
@@ -62,7 +65,7 @@
     main { max-width: 640px; margin: 48px auto; padding: 0 24px 48px; }
 
     .page-header { margin-bottom: 24px; }
-    .page-header h2 { font-size: 20px; font-weight: 700; color: #1a3a5c; }
+    .page-header h2 { font-size: 20px; font-weight: 700; color: #162447; }
     .page-header p { font-size: 13px; color: #6b7280; margin-top: 4px; line-height: 1.5; }
 
     .card {
@@ -91,8 +94,8 @@
       outline: none;
       transition: border-color .15s;
     }
-    .search-input:focus { border-color: #1a56db; }
-    .search-input:focus + .project-list { border-color: #1a56db; }
+    .search-input:focus { border-color: #139be8; }
+    .search-input:focus + .project-list { border-color: #139be8; }
 
     .project-list {
       width: 100%;
@@ -114,7 +117,7 @@
     }
     .project-item:last-child { border-bottom: none; }
     .project-item:hover { background: #f0f5ff; }
-    .project-item.selected { background: #1a56db; color: white; }
+    .project-item.selected { background: #139be8; color: white; }
     .project-item.placeholder { color: #9ca3af; cursor: default; font-style: italic; }
     .project-item.placeholder:hover { background: white; }
 
@@ -141,7 +144,7 @@
     }
 
     .btn-primary {
-      background: #1a56db;
+      background: #139be8;
       color: white;
       border: none;
       padding: 10px 24px;
@@ -152,7 +155,7 @@
       transition: background .15s, opacity .15s;
     }
     .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
-    .btn-primary:not(:disabled):hover { background: #1648c0; }
+    .btn-primary:not(:disabled):hover { background: #0e87d0; }
 
     .btn-secondary {
       background: none;

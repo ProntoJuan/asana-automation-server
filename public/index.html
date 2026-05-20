@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connected Projects — FRT Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       background: #f0f2f5;
       color: #1a1a2e;
       min-height: 100vh;
@@ -16,7 +19,7 @@
 
     /* Header */
     header {
-      background: #1a3a5c;
+      background: #162447;
       color: white;
       padding: 0 32px;
       height: 60px;
@@ -70,11 +73,11 @@
       justify-content: space-between;
       margin-bottom: 20px;
     }
-    .page-header h2 { font-size: 20px; font-weight: 700; color: #1a3a5c; }
+    .page-header h2 { font-size: 20px; font-weight: 700; color: #162447; }
     .page-header p { font-size: 13px; color: #6b7280; margin-top: 3px; }
 
     .btn-primary {
-      background: #1a56db;
+      background: #139be8;
       color: white;
       border: none;
       padding: 9px 18px;
@@ -89,7 +92,7 @@
       transition: background .15s;
       white-space: nowrap;
     }
-    .btn-primary:hover { background: #1648c0; }
+    .btn-primary:hover { background: #0e87d0; }
 
     /* Card */
     .card {
@@ -113,7 +116,7 @@
       padding: 20px 24px;
     }
     .stat-label { font-size: 12px; color: #6b7280; font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
-    .stat-value { font-size: 32px; font-weight: 700; color: #1a3a5c; margin-top: 6px; }
+    .stat-value { font-size: 32px; font-weight: 700; color: #162447; margin-top: 6px; }
     .stat-sub { font-size: 12px; color: #9ca3af; margin-top: 4px; }
 
     /* Table */
@@ -133,7 +136,7 @@
       outline: none;
       transition: border-color .15s;
     }
-    .search-filter:focus { border-color: #1a56db; }
+    .search-filter:focus { border-color: #139be8; }
 
     table { width: 100%; border-collapse: collapse; }
     thead th {
@@ -322,7 +325,7 @@
       tbody.innerHTML = `
         <tr><td colspan="5" class="table-empty">
           <strong>No connected projects</strong>
-          <a href="/register" style="color:#1a56db;text-decoration:none">Register your first project →</a>
+          <a href="/register" style="color:#139be8;text-decoration:none">Register your first project →</a>
         </td></tr>`
       return
     }
