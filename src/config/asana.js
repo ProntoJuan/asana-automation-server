@@ -167,8 +167,8 @@ const getUserByEmail = async (email) => {
 }
 
 const getTeamsForUser = async (userGid) => {
-  const opts = { organization: workspace, opt_fields: 'gid,name', limit: 100 }
-  const result = await asanaTeamsInstance.getTeamsForUser(userGid, opts)
+  const opts = { opt_fields: 'gid,name', limit: 100 }
+  const result = await asanaTeamsInstance.getTeamsForUser(userGid, workspace, opts)
   return result.data ?? []
 }
 
