@@ -161,9 +161,13 @@ const getProjectsInWorkspace = async () => {
 
 const getUserByEmail = async (email) => {
   const opts = { opt_fields: 'gid,email', limit: 100 }
-  const result = await asanaUsersInstance.getUsersForWorkspace(workspace, opts)
-  const users = result.data ?? []
-  return users.find(u => u.email === email) ?? null
+  let result = await asanaUsersInstance.getUsersForWorkspace(workspace, opts)
+  while (true) {
+    const found = (result.data ?? []).find(u => u.email === email)
+    if (found) return found
+    if (!result.next_page?.offset) return null
+    result = await asanaUsersInstance.getUsersForWorkspace(workspace, { ...opts, offset: result.next_page.offset })
+  }
 }
 
 const getTeamsForUser = async (userGid) => {
