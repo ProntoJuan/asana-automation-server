@@ -182,6 +182,23 @@ const getProjectsForTeam = async (teamGid) => {
   return result.data ?? []
 }
 
+const getAllWorkspaceProjectsWithMembership = async () => {
+  const opts = {
+    workspace: process.env.ASANA_WORKSPACE,
+    opt_fields: 'gid,name,team,members',
+    archived: false,
+    limit: 100
+  }
+  const projects = []
+  let result = await asanaProjectsInstance.getProjects(opts)
+  while (true) {
+    projects.push(...(result.data ?? []))
+    if (!result.next_page?.offset) break
+    result = await asanaProjectsInstance.getProjects({ ...opts, offset: result.next_page.offset })
+  }
+  return projects
+}
+
 export {
   asanaConfig,
   getWebhooks,
@@ -200,5 +217,6 @@ export {
   getProjectsInWorkspace,
   getUserByEmail,
   getTeamsForUser,
-  getProjectsForTeam
+  getProjectsForTeam,
+  getAllWorkspaceProjectsWithMembership
 }
