@@ -1,4 +1,4 @@
-import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getProjectsForTeam, getTeamlessProjectsForUser } from '../../config/asana.js'
+import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getProjectsForTeam, getTeamlessProjectsForUser, getProjectById } from '../../config/asana.js'
 import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
 import { buildFinalResponse } from '../webhook/utils.js'
 
@@ -50,6 +50,22 @@ export async function getProjectsUI (req, res) {
   } catch (error) {
     console.error('Error getting projects:', error)
     res.sendStatus(500)
+  }
+}
+
+export async function lookupProjectUI (req, res) {
+  try {
+    const { gid } = req.params
+    const registered = new Set(WebhookRepository.findAll().map(w => w.resourceId))
+    if (registered.has(gid)) {
+      return res.status(409).json({ message: 'This project already has a webhook registered.' })
+    }
+    const result = await getProjectById(gid)
+    const { gid: projectGid, name } = result.data
+    res.json({ gid: projectGid, name })
+  } catch (error) {
+    console.error('Error looking up project:', error)
+    res.status(404).json({ message: 'Project not found. Check the URL or GID and try again.' })
   }
 }
 

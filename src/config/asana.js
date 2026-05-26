@@ -143,7 +143,7 @@ const getMe = async () => {
 // PROJECTS
 
 const getProjectById = async (projectId) => {
-  const opts = {}
+  const opts = { opt_fields: 'gid,name' }
   const result = await asanaProjectsInstance.getProject(projectId, opts)
 
   return result

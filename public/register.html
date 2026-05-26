@@ -63,7 +63,7 @@
     }
     .btn-signout:hover { background: rgba(255,255,255,.22); }
 
-    main { max-width: 640px; margin: 48px auto; padding: 0 24px 48px; }
+    main { max-width: 560px; margin: 48px auto; padding: 0 24px 48px; }
 
     .page-header { margin-bottom: 24px; }
     .page-header h2 { font-size: 20px; font-weight: 700; color: #162447; }
@@ -85,61 +85,72 @@
     }
     .hint { font-size: 12px; color: #9ca3af; font-weight: 400; margin-left: 4px; }
 
-    .search-input {
-      width: 100%;
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .project-input {
+      flex: 1;
       padding: 10px 14px;
       border: 1px solid #d1d5db;
-      border-bottom: none;
-      border-radius: 8px 8px 0 0;
+      border-radius: 8px;
       font-size: 14px;
+      font-family: inherit;
       outline: none;
       transition: border-color .15s;
+      min-width: 0;
     }
-    .search-input:focus { border-color: #139be8; }
-    .search-input:focus + .project-list { border-color: #139be8; }
+    .project-input:focus { border-color: #139be8; }
 
-    .project-list {
-      width: 100%;
-      border: 1px solid #d1d5db;
-      border-radius: 0 0 8px 8px;
-      max-height: 260px;
-      overflow-y: auto;
-      background: white;
-    }
-
-    .project-item {
-      padding: 11px 14px;
+    .btn-lookup {
+      background: #162447;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
       font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
-      border-bottom: 1px solid #f3f4f6;
-      transition: background .1s;
-      color: #374151;
-      user-select: none;
+      white-space: nowrap;
+      transition: background .15s, opacity .15s;
     }
-    .project-item:last-child { border-bottom: none; }
-    .project-item:hover { background: #f0f5ff; }
-    .project-item.selected { background: #139be8; color: white; }
-    .project-item.placeholder { color: #9ca3af; cursor: default; font-style: italic; }
-    .project-item.placeholder:hover { background: white; }
+    .btn-lookup:hover { background: #1e3a6e; }
+    .btn-lookup:disabled { opacity: .5; cursor: not-allowed; }
 
-    .selected-info {
-      margin-top: 12px;
-      padding: 10px 14px;
-      background: #f0f5ff;
-      border: 1px solid #c7d7fd;
-      border-radius: 7px;
+    .result-card {
+      margin-top: 14px;
+      padding: 12px 16px;
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 8px;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+    .result-card.visible { display: flex; }
+    .result-icon { font-size: 18px; flex-shrink: 0; }
+    .result-label { font-size: 11px; font-weight: 600; color: #15803d; text-transform: uppercase; letter-spacing: .5px; }
+    .result-name { font-size: 14px; font-weight: 600; color: #166534; margin-top: 1px; }
+
+    .error-card {
+      margin-top: 14px;
+      padding: 11px 14px;
+      background: #fef2f2;
+      border: 1px solid #fca5a5;
+      border-radius: 8px;
       font-size: 13px;
-      color: #1e40af;
+      color: #991b1b;
       display: none;
     }
-    .selected-info.visible { display: block; }
-    .selected-info strong { font-weight: 600; }
+    .error-card.visible { display: block; }
 
     .form-actions {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-top: 20px;
+      margin-top: 24px;
       padding-top: 20px;
       border-top: 1px solid #f3f4f6;
     }
@@ -152,6 +163,7 @@
       border-radius: 8px;
       font-size: 14px;
       font-weight: 600;
+      font-family: inherit;
       cursor: pointer;
       transition: background .15s, opacity .15s;
     }
@@ -217,26 +229,35 @@
 <main>
   <div class="page-header">
     <h2>Register New Project</h2>
-    <p>Select an Asana project to start tracking First Response Time. Only projects without an active webhook are listed.</p>
+    <p>Paste the Asana project URL or GID to connect it for First Response Time tracking.</p>
   </div>
 
   <div class="card">
-    <label>Select project <span class="hint">— type to search</span></label>
-    <input
-      type="text"
-      id="search-input"
-      class="search-input"
-      placeholder="Search by project name…"
-      oninput="filterProjects()"
-      autocomplete="off"
-    >
-    <div class="project-list" id="project-list">
-      <div class="project-item placeholder">Loading projects…</div>
+    <label for="project-input">
+      Project URL or GID
+      <span class="hint">— from your browser's address bar</span>
+    </label>
+    <div class="input-row">
+      <input
+        type="text"
+        id="project-input"
+        class="project-input"
+        placeholder="https://app.asana.com/… or 1234567890"
+        autocomplete="off"
+        onkeydown="if(event.key==='Enter') lookupProject()"
+      >
+      <button id="lookup-btn" class="btn-lookup" onclick="lookupProject()">Look up</button>
     </div>
 
-    <div class="selected-info" id="selected-info">
-      Ready to register: <strong id="selected-name"></strong>
+    <div class="result-card" id="result-card">
+      <div class="result-icon">✓</div>
+      <div>
+        <div class="result-label">Project found</div>
+        <div class="result-name" id="result-name"></div>
+      </div>
     </div>
+
+    <div class="error-card" id="error-card"></div>
 
     <div class="form-actions">
       <button id="register-btn" class="btn-primary" disabled onclick="registerWebhook()">
@@ -250,7 +271,6 @@
 <div id="toast"></div>
 
 <script>
-  let allProjects = []
   let selectedGid = null
   let selectedName = null
 
@@ -264,55 +284,49 @@
         img.style.display = 'block'
       }
     } catch {}
-    await loadProjects()
   }
 
-  async function loadProjects () {
-    try {
-      const { projects } = await apiFetch('/ui/projects')
-      allProjects = projects
-      renderProjects(projects)
-    } catch {
-      document.getElementById('project-list').innerHTML =
-        '<div class="project-item placeholder">Failed to load projects — please refresh.</div>'
-    }
+  function extractGid (input) {
+    // Extract from full Asana URL: .../project/GID/...
+    const urlMatch = input.match(/\/project\/(\d+)/)
+    if (urlMatch) return urlMatch[1]
+    // Raw GID (digits only)
+    if (/^\d+$/.test(input.trim())) return input.trim()
+    return null
   }
 
-  function renderProjects (projects) {
-    const list = document.getElementById('project-list')
-    if (!projects.length) {
-      list.innerHTML = '<div class="project-item placeholder">All projects already have webhooks registered.</div>'
+  async function lookupProject () {
+    const raw = document.getElementById('project-input').value.trim()
+    if (!raw) return
+
+    const gid = extractGid(raw)
+    if (!gid) {
+      showError('Could not find a project GID. Paste the full Asana project URL or just the numeric GID.')
       return
     }
-    list.innerHTML = projects.map(p => `
-      <div class="project-item" data-gid="${esc(p.gid)}" data-name="${esc(p.name)}" onclick="selectProject(this)">
-        ${esc(p.name)}
-      </div>
-    `).join('')
-  }
 
-  function filterProjects () {
-    const q = document.getElementById('search-input').value.toLowerCase()
-    const filtered = allProjects.filter(p => p.name.toLowerCase().includes(q))
-    renderProjects(filtered)
-    clearSelection()
-  }
-
-  function selectProject (el) {
-    document.querySelectorAll('.project-item').forEach(i => i.classList.remove('selected'))
-    el.classList.add('selected')
-    selectedGid = el.dataset.gid
-    selectedName = el.dataset.name
-    document.getElementById('selected-name').textContent = selectedName
-    document.getElementById('selected-info').classList.add('visible')
-    document.getElementById('register-btn').disabled = false
-  }
-
-  function clearSelection () {
+    const btn = document.getElementById('lookup-btn')
+    btn.disabled = true
+    btn.textContent = 'Looking up…'
+    hideResult()
+    hideError()
     selectedGid = null
     selectedName = null
-    document.getElementById('selected-info').classList.remove('visible')
     document.getElementById('register-btn').disabled = true
+
+    try {
+      const { gid: projectGid, name } = await apiFetch(`/ui/projects/${gid}`)
+      selectedGid = projectGid
+      selectedName = name
+      document.getElementById('result-name').textContent = name
+      document.getElementById('result-card').classList.add('visible')
+      document.getElementById('register-btn').disabled = false
+    } catch (err) {
+      showError(err.message || 'Project not found. Check the URL or GID and try again.')
+    } finally {
+      btn.disabled = false
+      btn.textContent = 'Look up'
+    }
   }
 
   async function registerWebhook () {
@@ -335,6 +349,22 @@
     }
   }
 
+  function hideResult () {
+    document.getElementById('result-card').classList.remove('visible')
+  }
+
+  function hideError () {
+    const el = document.getElementById('error-card')
+    el.textContent = ''
+    el.classList.remove('visible')
+  }
+
+  function showError (msg) {
+    const el = document.getElementById('error-card')
+    el.textContent = msg
+    el.classList.add('visible')
+  }
+
   async function apiFetch (url, opts = {}) {
     const res = await fetch(url, opts)
     if (!res.ok) {
@@ -342,12 +372,6 @@
       throw new Error(body.message || `Error ${res.status}`)
     }
     return res.status === 204 ? null : res.json()
-  }
-
-  function esc (str) {
-    return String(str)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
   }
 
   let toastTimer
