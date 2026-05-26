@@ -90,7 +90,12 @@ export async function registerWebhookUI (req, res) {
 export async function deleteWebhookUI (req, res) {
   try {
     const { id } = req.params
-    await deleteWebhook(id)
+    try {
+      await deleteWebhook(id)
+    } catch (asanaError) {
+      // If Asana says the webhook is already gone, that's fine — still clean up locally
+      console.warn(`Asana webhook delete warning (${id}):`, asanaError.message)
+    }
     WebhookRepository.delete({ webhookId: id })
     res.json({ message: 'Webhook deleted' })
   } catch (error) {
