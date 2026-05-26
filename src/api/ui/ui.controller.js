@@ -1,4 +1,4 @@
-import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getAllWorkspaceProjectsWithMembership } from '../../config/asana.js'
+import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getProjectsForTeam, getTeamlessProjectsForUser } from '../../config/asana.js'
 import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
 import { buildFinalResponse } from '../webhook/utils.js'
 
@@ -31,20 +31,19 @@ export async function getProjectsUI (req, res) {
       return res.json({ projects: available })
     }
 
-    const [teams, allProjects] = await Promise.all([
-      getTeamsForUser(asanaUser.gid),
-      getAllWorkspaceProjectsWithMembership()
+    const teams = await getTeamsForUser(asanaUser.gid)
+    const [teamProjectArrays, teamlessProjects] = await Promise.all([
+      Promise.all(teams.map(t => getProjectsForTeam(t.gid))),
+      getTeamlessProjectsForUser(asanaUser.gid)
     ])
 
-    const teamGids = new Set(teams.map(t => t.gid))
-    const available = allProjects
+    const seen = new Set()
+    const available = [...teamProjectArrays.flat(), ...teamlessProjects]
       .filter(p => {
-        if (registered.has(p.gid)) return false
-        const inTeam = p.team && teamGids.has(p.team.gid)
-        const isMember = (p.members ?? []).some(m => m.gid === asanaUser.gid)
-        return inTeam || isMember
+        if (registered.has(p.gid) || seen.has(p.gid)) return false
+        seen.add(p.gid)
+        return true
       })
-      .map(p => ({ gid: p.gid, name: p.name }))
       .sort((a, b) => a.name.localeCompare(b.name))
 
     res.json({ projects: available })
