@@ -301,6 +301,14 @@
         img.style.display = 'block'
       }
     } catch {}
+
+    // Delegated handler — robust against any character (e.g. apostrophes) in project names
+    document.getElementById('webhooks-body').addEventListener('click', (e) => {
+      const btn = e.target.closest('.btn-delete')
+      if (!btn) return
+      deleteWebhook(btn.dataset.webhookId, btn.dataset.name, btn)
+    })
+
     await loadWebhooks()
   }
 
@@ -345,7 +353,7 @@
         </td>
         <td style="color:#6b7280">${formatDate(w.createdAt)}</td>
         <td>
-          <button class="btn-delete" onclick="deleteWebhook('${esc(w.webhookId)}', '${esc(w.resourceName)}', this)">
+          <button class="btn-delete" data-webhook-id="${esc(w.webhookId)}" data-name="${esc(w.resourceName)}">
             Delete
           </button>
         </td>
