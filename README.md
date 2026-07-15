@@ -57,6 +57,8 @@ ngrok http http://localhost:8080
 | -------------------------------- | ----------- | ------------------------------------ |
 | /webhook/first-time-response     | POST        | FTR webhook handshake/receive events |
 | /webhook/total-interaction-count | POST        | TIC webhook handshake/receive events |
+| /webhook/urgent-request          | GET         | List configured urgent keywords      |
+| /webhook/urgent-request/:gid     | POST        | UR webhook handshake/receive events  |
 
 ## 🚀 Asana developers overview
 

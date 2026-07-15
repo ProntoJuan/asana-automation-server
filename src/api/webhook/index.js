@@ -3,6 +3,8 @@ import {
   getWebhooksHandler,
   createWebhookHandler,
   webhookFRTHandler,
+  keywordsHandler,
+  webhookURHandler,
   deleteWebhookHandler
 } from './webhook.controller.js'
 import { authenticateAPI } from '../../middlewares/auth.js'
@@ -14,6 +16,10 @@ router.get('/', getWebhooksHandler)
 router.post('/', authenticateAPI, createWebhookHandler)
 
 router.post('/first-response-time/:gid', webhookFRTHandler)
+
+router.get('/urgent-request', keywordsHandler)
+
+router.post('/urgent-request/:gid', webhookURHandler)
 
 router.delete('/:id', authenticateAPI, deleteWebhookHandler)
 

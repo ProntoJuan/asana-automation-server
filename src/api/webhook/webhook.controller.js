@@ -1,8 +1,10 @@
 import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
+import { KeywordsRepository } from '../../schemas/db-local/keywords.js'
 import { verifySignature } from '../../util/crypto.js'
 import { handleFirstResponseTime, verifyStoryFRT } from './webhook.service.js'
-import { getWebhooks, createFRTWebhook, createTICWebhook, createURWebhook, deleteWebhook } from '../../config/asana.js'
-import { buildFinalResponse } from './utils.js'
+import { getWebhooks, createFRTWebhook, createTICWebhook, createURWebhook, deleteWebhook, getTask, getStory, updateTask } from '../../config/asana.js'
+import { buildFinalResponse, checkIfCreatedByTeam, checkIfUrgentPrioritySet } from './utils.js'
+import { containsUrgentKeyword } from '../../util/urgentKeyword.js'
 
 export async function getWebhooksHandler (req, res) {
   try {
@@ -113,6 +115,144 @@ export async function webhookFRTHandler (req, res) {
     await handleFirstResponseTime(storyParentId, createdAt)
   } catch (error) {
     console.error('Error in webhookHandler:', error)
+  }
+}
+
+export async function webhookURHandler (req, res) {
+  try {
+    const { body } = req
+    const { gid } = req.params
+    const xHookSignature = req.headers['x-hook-signature']
+    const webhook = WebhookRepository.findByGidAndPath(
+      gid,
+      '/urgent-request'
+    )
+
+    // Handle webhook secret handshake when creating a webhook
+    if (req.headers['x-hook-secret']) {
+      const secret = req.headers['x-hook-secret']
+
+      WebhookRepository.update(webhook._id, { secret })
+
+      console.log('This is a new webhook')
+
+      res.setHeader('X-Hook-Secret', secret)
+      res.sendStatus(200)
+      return
+    }
+
+    console.log('New event(s) received:', JSON.stringify(body, null, 2))
+
+    const { events } = body
+
+    const secretUR = WebhookRepository.findById(webhook._id).secret
+
+    // Verify the signature of the webhook when an event is sent
+
+    if (!verifySignature(xHookSignature, body, secretUR)) {
+      console.log('Authorization error. Sent 401')
+      res.sendStatus(401)
+      return
+    }
+    res.sendStatus(200)
+
+    if (events.length === 0) return
+
+    let textToAnalyze = ''
+    let taskId = null
+
+    for (const event of events) {
+      if (event.action === 'changed') {
+        // When a story change
+        if (
+          event.resource.resource_type === 'story' &&
+          event.change.field === 'text'
+        ) {
+          const data = (await getStory(event.resource.gid)).data
+
+          // Check if the story was changed by a team member
+          if (await checkIfCreatedByTeam(data)) return
+
+          const {
+            text,
+            target: { gid: taskGid }
+          } = data
+          taskId = taskGid
+          textToAnalyze += text
+
+          const taskData = (await getTask(taskId)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(taskData)) return
+        }
+      }
+
+      if (event.action === 'added') {
+        // When a new task is added
+        if (
+          event.resource.resource_type === 'task' &&
+          event.parent.resource_type === 'project'
+        ) {
+          taskId = event.resource.gid
+          const data = (await getTask(event.resource.gid)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(data)) return
+
+          const { name, notes } = data
+          textToAnalyze += name + ' ' + notes
+        }
+        // When a new comment is added
+        if (
+          event.resource.resource_subtype === 'comment_added' &&
+          event.user !== null
+        ) {
+          taskId = event.parent.gid
+
+          const taskData = (await getTask(taskId)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(taskData)) return
+
+          const data = (await getStory(event.resource.gid)).data
+
+          // Check if the comment was created by a team member
+          if (await checkIfCreatedByTeam(data)) return
+
+          const { text } = data
+          textToAnalyze += text
+        }
+      }
+    }
+
+    if (!textToAnalyze) return
+
+    const urgentKeywords = KeywordsRepository.findAll().map(i => i.keyword)
+
+    const isUrgentWordDetected = containsUrgentKeyword(urgentKeywords, textToAnalyze)
+
+    if (!isUrgentWordDetected) return
+
+    await updateTask(
+      taskId,
+      process.env.PRIORITY_CUSTOM_FIELD_GID,
+      process.env.URGENT_ENUM_PRIORITY_GID
+    )
+
+    console.log(`New keyword detected on task ${taskId}`)
+  } catch (error) {
+    console.error('Error in webhookHandler:', error)
+  }
+}
+
+export function keywordsHandler (req, res) {
+  try {
+    const keywords = KeywordsRepository.findAll().map(i => i.keyword)
+
+    res.status(200).json({ keywords })
+  } catch (error) {
+    console.error('Error getting the keywords: ', error.message)
+    res.sendStatus(500)
   }
 }
 

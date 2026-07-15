@@ -20,6 +20,14 @@ export const buildFinalResponse = (serverResponse, DB) => {
   return finalResponse
 }
 
+export const checkIfUrgentPrioritySet = (taskInfo) => {
+  const priorityCustomField = taskInfo.custom_fields
+    .find(
+      i => i.gid === process.env.PRIORITY_CUSTOM_FIELD_GID
+    )
+  return priorityCustomField.display_value === 'Urgent'
+}
+
 export const checkIfCreatedByTeam = async (resource) => {
   const team = await getUsersInATeam(process.env.DEDICATED_SUPPORT_GID)
   const createdByGid = resource.created_by.gid
