@@ -159,44 +159,43 @@
     .project-name { font-weight: 500; color: #111827; }
     .project-id { font-size: 11px; color: #9ca3af; margin-top: 2px; font-family: monospace; }
 
-    .status-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 3px 9px;
-      border-radius: 20px;
-    }
-    .status-active { background: #d1fae5; color: #065f46; }
-    .status-inactive { background: #fee2e2; color: #991b1b; }
-    .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .badge-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
 
     .type-badge {
       display: inline-flex;
       align-items: center;
+      gap: 6px;
       font-size: 11px;
       font-weight: 500;
-      padding: 2px 8px;
+      padding: 3px 9px;
       border-radius: 20px;
       background: #eef2ff;
       color: #4338ca;
     }
     .type-badge.type-urgent { background: #fff7ed; color: #9a3412; }
 
-    .btn-delete {
-      background: none;
-      border: 1px solid #e5e7eb;
-      color: #6b7280;
-      padding: 5px 14px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 500;
+    .mini-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .4; }
+    .mini-dot.mini-active { background: #10b981; opacity: 1; }
+
+    .mini-x {
+      all: unset;
       cursor: pointer;
-      transition: all .15s;
+      font-size: 13px;
+      font-weight: 700;
+      line-height: 1;
+      color: currentColor;
+      opacity: .75;
+      width: 15px;
+      height: 15px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(0,0,0,.08);
     }
-    .btn-delete:hover { border-color: #ef4444; color: #ef4444; background: #fff5f5; }
-    .btn-delete:disabled { opacity: .4; cursor: not-allowed; }
+    .mini-x:hover { opacity: 1; background: rgba(0,0,0,.16); }
+    .mini-x:focus-visible { outline: 2px solid #139be8; outline-offset: 1px; opacity: 1; }
+    .mini-x:disabled { opacity: .3; cursor: not-allowed; }
 
     .table-empty {
       text-align: center;
@@ -286,13 +285,11 @@
         <tr>
           <th>#</th>
           <th>Project</th>
-          <th>Status</th>
           <th>Registered</th>
-          <th></th>
         </tr>
       </thead>
       <tbody id="webhooks-body">
-        <tr><td colspan="5" class="table-empty"><strong>Loading…</strong></td></tr>
+        <tr><td colspan="3" class="table-empty"><strong>Loading…</strong></td></tr>
       </tbody>
     </table>
   </div>
@@ -316,9 +313,9 @@
 
     // Delegated handler — robust against any character (e.g. apostrophes) in project names
     document.getElementById('webhooks-body').addEventListener('click', (e) => {
-      const btn = e.target.closest('.btn-delete')
+      const btn = e.target.closest('.mini-x')
       if (!btn) return
-      deleteWebhook(btn.dataset.webhookId, btn.dataset.name, btn)
+      deleteWebhook(btn.dataset.webhookId, btn.dataset.name, btn.dataset.typeLabel, btn)
     })
 
     await loadWebhooks()
@@ -336,47 +333,62 @@
       document.getElementById('stat-inactive').textContent = webhooks.length - active
     } catch {
       document.getElementById('webhooks-body').innerHTML =
-        '<tr><td colspan="5" class="table-empty"><strong>Failed to load</strong>Check your connection and refresh.</td></tr>'
+        '<tr><td colspan="3" class="table-empty"><strong>Failed to load</strong>Check your connection and refresh.</td></tr>'
     }
+  }
+
+  const TYPE_LABELS = {
+    '/urgent-request': { label: 'Urgent Keyword', cssClass: 'type-urgent' },
+    '/first-response-time': { label: 'FRT', cssClass: '' },
+    '/total-interaction-count': { label: 'TIC', cssClass: '' }
+  }
+
+  function groupByProject (list) {
+    const groups = new Map()
+    for (const w of list) {
+      if (!groups.has(w.resourceId)) {
+        groups.set(w.resourceId, { resourceId: w.resourceId, resourceName: w.resourceName, webhooks: [] })
+      }
+      groups.get(w.resourceId).webhooks.push(w)
+    }
+    return [...groups.values()]
+  }
+
+  function webhookBadge (w) {
+    const type = TYPE_LABELS[w.path] || { label: w.path, cssClass: '' }
+    return `
+      <span class="type-badge ${type.cssClass}">
+        <span class="mini-dot ${w.active ? 'mini-active' : ''}" title="${w.active ? 'Active' : 'Inactive'}"></span>
+        ${esc(type.label)}
+        <button class="mini-x" data-webhook-id="${esc(w.webhookId)}" data-name="${esc(w.resourceName)}" data-type-label="${esc(type.label)}"
+          title="Remove ${esc(type.label)} webhook" aria-label="Remove ${esc(type.label)} webhook for ${esc(w.resourceName)}">&times;</button>
+      </span>`
   }
 
   function renderWebhooks (list) {
     const tbody = document.getElementById('webhooks-body')
     if (!list.length) {
       tbody.innerHTML = `
-        <tr><td colspan="5" class="table-empty">
+        <tr><td colspan="3" class="table-empty">
           <strong>No connected projects</strong>
           <a href="/register" style="color:#139be8;text-decoration:none">Register your first project →</a>
         </td></tr>`
       return
     }
-    const typeBadge = (path) => {
-      if (path === '/urgent-request') return '<span class="type-badge type-urgent">Urgent Keyword</span>'
-      if (path === '/first-response-time') return '<span class="type-badge">FRT</span>'
-      if (path === '/total-interaction-count') return '<span class="type-badge">TIC</span>'
-      return ''
-    }
-    tbody.innerHTML = list.map((w, i) => `
-      <tr data-name="${esc(w.resourceName.toLowerCase())}">
+    const groups = groupByProject(list)
+    tbody.innerHTML = groups.map((g, i) => {
+      const earliest = g.webhooks.reduce((min, w) => (!min || w.createdAt < min ? w.createdAt : min), null)
+      return `
+      <tr data-name="${esc(g.resourceName.toLowerCase())}">
         <td style="color:#9ca3af;font-size:13px">${i + 1}</td>
         <td>
-          <div class="project-name">${esc(w.resourceName)} ${typeBadge(w.path)}</div>
-          <div class="project-id">${esc(w.webhookId)}</div>
+          <div class="project-name">${esc(g.resourceName)}</div>
+          <div class="badge-row">${g.webhooks.map(webhookBadge).join('')}</div>
+          <div class="project-id">${g.webhooks.map(w => esc(w.webhookId)).join(' · ')}</div>
         </td>
-        <td>
-          <span class="status-badge ${w.active ? 'status-active' : 'status-inactive'}">
-            <span class="status-dot"></span>
-            ${w.active ? 'Active' : 'Inactive'}
-          </span>
-        </td>
-        <td style="color:#6b7280">${formatDate(w.createdAt)}</td>
-        <td>
-          <button class="btn-delete" data-webhook-id="${esc(w.webhookId)}" data-name="${esc(w.resourceName)}">
-            Delete
-          </button>
-        </td>
-      </tr>
-    `).join('')
+        <td style="color:#6b7280">${formatDate(earliest)}</td>
+      </tr>`
+    }).join('')
   }
 
   function filterTable () {
@@ -385,18 +397,16 @@
     renderWebhooks(filtered)
   }
 
-  async function deleteWebhook (webhookId, name, btn) {
-    if (!confirm(`Remove webhook for:\n"${name}"?\n\nFRT will stop being tracked for this project.`)) return
+  async function deleteWebhook (webhookId, name, typeLabel, btn) {
+    if (!confirm(`Remove the ${typeLabel} webhook for:\n"${name}"?`)) return
     btn.disabled = true
-    btn.textContent = 'Deleting…'
     try {
       await apiFetch(`/ui/webhooks/${webhookId}`, { method: 'DELETE' })
-      showToast(`Webhook removed for "${name}"`, 'success')
+      showToast(`${typeLabel} webhook removed for "${name}"`, 'success')
       await loadWebhooks()
     } catch {
       showToast('Failed to delete — please try again', 'error')
       btn.disabled = false
-      btn.textContent = 'Delete'
     }
   }
 
