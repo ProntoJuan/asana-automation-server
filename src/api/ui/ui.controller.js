@@ -1,4 +1,4 @@
-import { getWebhooks, deleteWebhook, createFRTWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getProjectsForTeam, getTeamlessProjectsForUser, getProjectById } from '../../config/asana.js'
+import { getWebhooks, deleteWebhook, createFRTWebhook, createURWebhook, getProjectsInWorkspace, getUserByEmail, getTeamsForUser, getProjectsForTeam, getTeamlessProjectsForUser, getProjectById } from '../../config/asana.js'
 import { WebhookRepository } from '../../schemas/db-local/webhooks.js'
 import { buildFinalResponse } from '../webhook/utils.js'
 
@@ -79,12 +79,25 @@ export async function registerWebhookUI (req, res) {
     const response = await createFRTWebhook(gid)
     const { gid: webhookId, resource: { resource_type: resourceType } } = response.data
     WebhookRepository.update(webhookUUID, { webhookId, resourceType })
-    res.status(201).json({ message: 'Webhook registered successfully' })
   } catch (error) {
     if (webhookUUID) WebhookRepository.delete({ _id: webhookUUID })
     console.error('Error registering webhook:', error)
-    res.status(500).json({ message: 'Failed to register webhook' })
+    return res.status(500).json({ message: 'Failed to register webhook' })
   }
+
+  let urgentWebhookUUID
+  try {
+    urgentWebhookUUID = WebhookRepository.create({ path: '/urgent-request', resourceId: gid })
+    const urgentResponse = await createURWebhook(gid)
+    const { gid: urgentWebhookId, resource: { resource_type: urgentResourceType } } = urgentResponse.data
+    WebhookRepository.update(urgentWebhookUUID, { webhookId: urgentWebhookId, resourceType: urgentResourceType })
+  } catch (error) {
+    if (urgentWebhookUUID) WebhookRepository.delete({ _id: urgentWebhookUUID })
+    console.error('Error registering urgent-keyword webhook:', error)
+    return res.status(201).json({ message: 'Webhook registered, but urgent-keyword detection could not be set up automatically (check server logs)' })
+  }
+
+  res.status(201).json({ message: 'Webhook registered successfully' })
 }
 
 export async function deleteWebhookUI (req, res) {

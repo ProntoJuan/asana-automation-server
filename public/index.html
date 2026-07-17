@@ -172,6 +172,18 @@
     .status-inactive { background: #fee2e2; color: #991b1b; }
     .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 500;
+      padding: 2px 8px;
+      border-radius: 20px;
+      background: #eef2ff;
+      color: #4338ca;
+    }
+    .type-badge.type-urgent { background: #fff7ed; color: #9a3412; }
+
     .btn-delete {
       background: none;
       border: 1px solid #e5e7eb;
@@ -338,11 +350,17 @@
         </td></tr>`
       return
     }
+    const typeBadge = (path) => {
+      if (path === '/urgent-request') return '<span class="type-badge type-urgent">Urgent Keyword</span>'
+      if (path === '/first-response-time') return '<span class="type-badge">FRT</span>'
+      if (path === '/total-interaction-count') return '<span class="type-badge">TIC</span>'
+      return ''
+    }
     tbody.innerHTML = list.map((w, i) => `
       <tr data-name="${esc(w.resourceName.toLowerCase())}">
         <td style="color:#9ca3af;font-size:13px">${i + 1}</td>
         <td>
-          <div class="project-name">${esc(w.resourceName)}</div>
+          <div class="project-name">${esc(w.resourceName)} ${typeBadge(w.path)}</div>
           <div class="project-id">${esc(w.webhookId)}</div>
         </td>
         <td>
