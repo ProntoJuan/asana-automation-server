@@ -3,7 +3,7 @@ import { KeywordsRepository } from '../../schemas/db-local/keywords.js'
 import { verifySignature } from '../../util/crypto.js'
 import { handleFirstResponseTime, verifyStoryFRT } from './webhook.service.js'
 import { getWebhooks, createFRTWebhook, createTICWebhook, createURWebhook, deleteWebhook, getTask, getStory, updateTask } from '../../config/asana.js'
-import { buildFinalResponse, checkIfCreatedByTeam, checkIfUrgentPrioritySet } from './utils.js'
+import { buildFinalResponse, checkIfUrgentPrioritySet } from './utils.js'
 import { containsUrgentKeyword } from '../../util/urgentKeyword.js'
 
 export async function getWebhooksHandler (req, res) {
@@ -170,9 +170,6 @@ export async function webhookURHandler (req, res) {
         ) {
           const data = (await getStory(event.resource.gid)).data
 
-          // Check if the story was changed by a team member
-          if (await checkIfCreatedByTeam(data)) return
-
           const {
             text,
             target: { gid: taskGid }
@@ -184,6 +181,21 @@ export async function webhookURHandler (req, res) {
 
           // Check if the task already has the urgent priority
           if (checkIfUrgentPrioritySet(taskData)) return
+        }
+
+        // When an existing task's title or description is edited
+        if (
+          event.resource.resource_type === 'task' &&
+          (event.change.field === 'name' || event.change.field === 'notes')
+        ) {
+          taskId = event.resource.gid
+          const data = (await getTask(taskId)).data
+
+          // Check if the task already has the urgent priority
+          if (checkIfUrgentPrioritySet(data)) return
+
+          const { name, notes } = data
+          textToAnalyze += name + ' ' + notes
         }
       }
 
@@ -215,9 +227,6 @@ export async function webhookURHandler (req, res) {
           if (checkIfUrgentPrioritySet(taskData)) return
 
           const data = (await getStory(event.resource.gid)).data
-
-          // Check if the comment was created by a team member
-          if (await checkIfCreatedByTeam(data)) return
 
           const { text } = data
           textToAnalyze += text

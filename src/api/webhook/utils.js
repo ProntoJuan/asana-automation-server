@@ -1,5 +1,3 @@
-import { getUsersInATeam } from '../../config/asana.js'
-
 export const buildFinalResponse = (serverResponse, DB) => {
   const finalResponse = serverResponse.map(serverItem => {
     const dbItem = DB.find(dbItem => dbItem.webhookId === serverItem.gid)
@@ -26,13 +24,4 @@ export const checkIfUrgentPrioritySet = (taskInfo) => {
       i => i.gid === process.env.PRIORITY_CUSTOM_FIELD_GID
     )
   return priorityCustomField.display_value === 'Urgent'
-}
-
-export const checkIfCreatedByTeam = async (resource) => {
-  const team = await getUsersInATeam(process.env.DEDICATED_SUPPORT_GID)
-  const createdByGid = resource.created_by.gid
-
-  const teamsIds = new Set(team.data.map(member => member.gid))
-
-  return teamsIds.has(createdByGid)
 }
