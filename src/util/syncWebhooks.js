@@ -1,10 +1,12 @@
 import { getWebhooks } from '../config/asana.js'
 import { WebhookRepository } from '../schemas/db-local/webhooks.js'
+import { formatAsanaError } from './asanaError.js'
+import { logEvent } from './eventLog.js'
 
 export async function syncWebhooksFromAsana () {
   try {
     const { data: asanaWebhooks } = await getWebhooks()
-    let synced = 0
+    const recovered = []
 
     for (const webhook of asanaWebhooks) {
       // Target URL format: <host>/api/webhook/<path-segment>/<resource-gid>
@@ -19,14 +21,30 @@ export async function syncWebhooksFromAsana () {
           webhookId: webhook.gid,
           resourceType: webhook.resource.resource_type
         })
-        synced++
+        recovered.push(webhook.resource.gid)
       }
     }
 
-    if (synced > 0) {
-      console.log(`Recovered ${synced} webhook(s) from Asana into local DB`)
+    if (recovered.length > 0) {
+      // Recovered records have NO handshake secret — Asana sends it once, at
+      // creation. Events for these fail signature verification with a 401 until
+      // the project is deleted and registered again, so say so loudly rather
+      // than reporting a successful recovery.
+      console.warn(
+        `Recovered ${recovered.length} webhook(s) from Asana WITHOUT handshake secrets — ` +
+        `signature verification will fail for these until they are re-registered: ${recovered.join(', ')}`
+      )
+
+      for (const projectGid of recovered) {
+        logEvent({
+          level: 'warn',
+          event: 'webhook.recovered_without_secret',
+          projectGid,
+          message: 'Webhook record rebuilt from Asana on startup but has no handshake secret — events will be rejected with 401 until this project is re-registered'
+        })
+      }
     }
   } catch (error) {
-    console.error('Failed to sync webhooks from Asana on startup:', error.message)
+    console.error('Failed to sync webhooks from Asana on startup:', formatAsanaError(error))
   }
 }
