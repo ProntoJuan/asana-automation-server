@@ -26,6 +26,10 @@ function routes (app) {
   app.get('/register', checkAuthenticated, (req, res) => {
     res.sendFile(path.join(__dirname, '../public/register.html'))
   })
+
+  app.get('/debug', checkAuthenticated, (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/debug.html'))
+  })
 }
 
 export default routes

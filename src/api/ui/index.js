@@ -1,5 +1,5 @@
 import { Router } from 'express'
-import { getMeUI, getWebhooksUI, getProjectsUI, lookupProjectUI, registerWebhookUI, deleteWebhookUI } from './ui.controller.js'
+import { getMeUI, getWebhooksUI, getProjectsUI, lookupProjectUI, registerWebhookUI, deleteWebhookUI, getEventsUI, getDiagnosticsUI, getBotIdentityUI } from './ui.controller.js'
 
 const router = Router()
 
@@ -9,5 +9,8 @@ router.get('/projects', getProjectsUI)
 router.get('/projects/:gid', lookupProjectUI)
 router.post('/webhooks', registerWebhookUI)
 router.delete('/webhooks/:id', deleteWebhookUI)
+router.get('/events', getEventsUI)
+router.get('/bot', getBotIdentityUI)
+router.get('/diagnostics/:gid', getDiagnosticsUI)
 
 export default router

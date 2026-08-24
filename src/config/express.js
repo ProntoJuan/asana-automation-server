@@ -7,6 +7,7 @@ import passport from './passport.js'
 import routes from '../routes.js'
 import { asanaConfig } from './asana.js'
 import { syncWebhooksFromAsana } from '../util/syncWebhooks.js'
+import { startEventLogPruning } from '../util/eventLog.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
@@ -32,6 +33,7 @@ function configExpress (app) {
   asanaConfig()
   routes(app)
   syncWebhooksFromAsana()
+  startEventLogPruning()
 }
 
 export default configExpress

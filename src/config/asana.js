@@ -1,6 +1,7 @@
 import Asana from 'asana'
 
 let asanaTaskInstance, asanaStoriesInstance, asanaUsersInstance, asanaProjectsInstance, asanaWebhooksInstance, asanaTeamsInstance
+let asanaProjectMembershipsInstance, asanaCustomFieldSettingsInstance
 
 const target = process.env.ENV === 'local' ? process.env.WEBHOOK_TARGET : process.env.HOST
 
@@ -18,6 +19,8 @@ const asanaConfig = () => {
   asanaUsersInstance = new Asana.UsersApi()
   asanaProjectsInstance = new Asana.ProjectsApi()
   asanaTeamsInstance = new Asana.TeamsApi()
+  asanaProjectMembershipsInstance = new Asana.ProjectMembershipsApi()
+  asanaCustomFieldSettingsInstance = new Asana.CustomFieldSettingsApi()
 }
 
 // WEBHOOKS
@@ -27,6 +30,27 @@ const getWebhooks = async () => {
   const result = await asanaWebhooksInstance.getWebhooks(workspace, opts)
 
   return result
+}
+
+// getWebhooks() returns only the first page. Callers that draw conclusions from
+// a webhook's *absence* (ghost-record detection, diagnostics) must use this
+// instead and honour `complete` — a partial list would flag live webhooks as gone.
+const getAllWebhooks = async () => {
+  const opts = { limit: 100 }
+  const webhooks = []
+
+  try {
+    let result = await asanaWebhooksInstance.getWebhooks(workspace, opts)
+    while (true) {
+      webhooks.push(...(result.data ?? []))
+      if (!result.next_page?.offset) break
+      result = await asanaWebhooksInstance.getWebhooks(workspace, { ...opts, offset: result.next_page.offset })
+    }
+  } catch (error) {
+    return { webhooks, complete: false, error }
+  }
+
+  return { webhooks, complete: true, error: null }
 }
 
 const createFRTWebhook = async (resource) => {
@@ -134,8 +158,10 @@ const getUserById = async (userId) => {
   return result
 }
 
+// The identity every automation acts as — whoever owns ASANA_PAT.
 const getMe = async () => {
-  const result = await asanaUsersInstance.getUser('me')
+  const opts = { opt_fields: 'gid,name,email' }
+  const result = await asanaUsersInstance.getUser('me', opts)
 
   return result
 }
@@ -143,7 +169,7 @@ const getMe = async () => {
 // PROJECTS
 
 const getProjectById = async (projectId) => {
-  const opts = { opt_fields: 'gid,name' }
+  const opts = { opt_fields: 'gid,name,privacy_setting,default_access_level' }
   const result = await asanaProjectsInstance.getProject(projectId, opts)
 
   return result
@@ -203,9 +229,42 @@ const getTeamlessProjectsForUser = async (userGid) => {
   return matches
 }
 
+// PROJECT MEMBERSHIPS / CUSTOM FIELD SETTINGS (diagnostics)
+
+// access_level is what the 403 custom_fields_restricted actually turns on:
+// a Commenter/Viewer cannot write custom fields even though they can see them.
+const getProjectMemberships = async (projectId) => {
+  const opts = { opt_fields: 'user.name,user.email,access_level', limit: 100 }
+  const memberships = []
+
+  let result = await asanaProjectMembershipsInstance.getProjectMembershipsForProject(projectId, opts)
+  while (true) {
+    memberships.push(...(result.data ?? []))
+    if (!result.next_page?.offset) break
+    result = await asanaProjectMembershipsInstance.getProjectMembershipsForProject(projectId, { ...opts, offset: result.next_page.offset })
+  }
+
+  return memberships
+}
+
+const getCustomFieldSettingsForProject = async (projectId) => {
+  const opts = { opt_fields: 'custom_field.gid,custom_field.name', limit: 100 }
+  const settings = []
+
+  let result = await asanaCustomFieldSettingsInstance.getCustomFieldSettingsForProject(projectId, opts)
+  while (true) {
+    settings.push(...(result.data ?? []))
+    if (!result.next_page?.offset) break
+    result = await asanaCustomFieldSettingsInstance.getCustomFieldSettingsForProject(projectId, { ...opts, offset: result.next_page.offset })
+  }
+
+  return settings
+}
+
 export {
   asanaConfig,
   getWebhooks,
+  getAllWebhooks,
   createFRTWebhook,
   createTICWebhook,
   createURWebhook,
@@ -222,5 +281,7 @@ export {
   getUserByEmail,
   getTeamsForUser,
   getProjectsForTeam,
-  getTeamlessProjectsForUser
+  getTeamlessProjectsForUser,
+  getProjectMemberships,
+  getCustomFieldSettingsForProject
 }
